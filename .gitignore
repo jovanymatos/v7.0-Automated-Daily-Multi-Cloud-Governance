@@ -1,0 +1,19 @@
+# Credentials & Environment Files (NEVER COMMIT SECRETS)
+.env
+.env.*
+*secret*
+*token*
+*credentials*.json
+
+# Python bytecode & virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Terraform & Sentinel local runtime artifacts
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars

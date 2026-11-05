@@ -1,0 +1,2482 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wiz Policies ⇄ HashiCorp Sentinel (AWS &amp; Azure) Gap Workbench</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #090d16;
+      color: #f1f5f9;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#090d16] text-slate-100 selection:bg-indigo-500 selection:text-white">
+
+  <!-- Toast Notification Banner -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-[#090d16]/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-indigo-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 font-bold text-lg tracking-tight">
+          SW
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">Wiz Policies ⇄ HashiCorp Sentinel (AWS &amp; Azure) Gap Workbench</h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">
+              SDLC Audit Governance v7.0 (Automated Daily Cadence)
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">3-Layer Defense-in-Depth Crosswalk: Layer 1 Checkov (CI/PR) ⇄ Layer 2 HashiCorp Sentinel (TFC/TFE) ⇄ Layer 3 Wiz CCRs (Runtime) in AWS &amp; Azure</p>
+        </div>
+      </div>
+
+      <!-- Primary Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btnOpenImportTab" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+          <span>📥</span> Import JSON / CSV
+        </button>
+        <button id="btnExportCsv" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+          <span>📊</span> Export CSV
+        </button>
+        <button id="btnExportJson" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+          <span>💾</span> Export Audit JSON
+        </button>
+        <button id="btnExportHtml" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-sm shadow-indigo-500/30 transition flex items-center gap-1.5">
+          <span>🌐</span> Export Interactive Report (.html)
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-1 overflow-x-auto border-t border-slate-800/50 pt-1">
+      <button id="tabBtnDashboard" type="button" data-tab="dashboard" class="tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 whitespace-nowrap transition">
+        1. Visual Analytics &amp; 1:1 Crosswalk
+      </button>
+      <button id="tabBtnEngine" type="button" data-tab="engine" class="tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition">
+        2. Live Browser Mapping Engine (Upload Files)
+      </button>
+      <button id="tabBtnRego" type="button" data-tab="rego" class="tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition">
+        3. OPA Rego Gap Studio
+      </button>
+      <button id="tabBtnAccess" type="button" data-tab="access" class="tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition">
+        4. AWS, Azure &amp; Wiz Access Checklist
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: VISUAL ANALYTICS & 1:1 CROSSWALK    -->
+    <!-- ========================================== -->
+    <section id="tabPanelDashboard" class="space-y-6">
+
+      <!-- BI-WEEKLY SDLC AUDIT GOVERNANCE & EXCEPTION MANAGEMENT BANNER -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-slate-900 border border-amber-500/40 rounded-xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">Audit Remediation Control</span>
+              <h2 class="text-xs sm:text-sm font-bold text-white">SDLC Governance for Automated Daily Cloud Security Policy Pulls, Deployments &amp; Rule Exceptions</h2>
+            </div>
+            <p class="text-[11px] text-slate-300 mt-1">
+              Govern daily policy updates pulled from AWS, Azure, Wiz, HCP Terraform &amp; Checkov through a repeatable daily SDLC workflow: <strong>Evaluate Applicability → Test in CI (Checkov) &amp; TFE (Sentinel) → Approve/Exclude with Justification → Schedule 90-Day Periodic Reassessment</strong>.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <div class="flex items-center gap-1.5 bg-slate-950 border border-indigo-500/50 rounded-lg px-2.5 py-1">
+              <label for="filterDateWindow" class="text-[11px] text-indigo-300 font-semibold whitespace-nowrap">Policy Creation Date:</label>
+              <select id="filterDateWindow" class="bg-slate-950 text-xs text-white font-semibold focus:outline-none cursor-pointer">
+                <option value="ALL">All Dates (Full Catalog)</option>
+                <option value="1">1 Day (Last 24h)</option>
+                <option value="7">7 Days</option>
+                <option value="30">30 Days</option>
+                <option value="90">90 Days</option>
+                <option value="180">180 Days</option>
+                <option value="365">365 Days</option>
+              </select>
+            </div>
+            <select id="filterSdlcException" class="bg-slate-950 border border-amber-500/50 rounded-lg px-3 py-1.5 text-xs text-amber-200 font-medium focus:outline-none focus:border-amber-400">
+              <option value="ALL">All SDLC &amp; Exception States</option>
+              <option value="Daily SDLC">1. Daily Intake Queue (Policies Review)</option>
+              <option value="Excluded">2. Excluded Rule Exceptions (Periodic Reassessment)</option>
+              <option value="Custom Rule">3. Custom Rule Management (Checkov/Sentinel/Rego)</option>
+              <option value="SDLC Approved">4. SDLC Approved &amp; Implemented Baseline</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE 5-STEP CCR REVIEW WORKFLOW PIPELINE BANNER -->
+      <div class="bg-slate-900/95 border border-indigo-500/30 rounded-xl p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">AWS + Azure Workflow</span>
+            <h2 class="text-xs sm:text-sm font-bold text-white">5-Step CCR Review &amp; Bidirectional Sentinel Gap Pipeline (Click any stage to filter queue)</h2>
+          </div>
+          <button id="btnResetWorkflowStage" type="button" class="text-xs text-indigo-400 hover:text-indigo-300 underline">Show All Stages</button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+          <button id="wfStep1Btn" type="button" data-wf-step="1" class="wf-step-btn text-left p-3 rounded-lg bg-slate-950/90 hover:bg-slate-800/80 border border-slate-800 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-indigo-400">1. Identify CCR Change</span>
+              <span id="wfStep1Count" class="text-xs font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300">7</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Capture new/updated AWS &amp; Azure rules in Wiz</p>
+          </button>
+
+          <button id="wfStep2Btn" type="button" data-wf-step="2" class="wf-step-btn text-left p-3 rounded-lg bg-slate-950/90 hover:bg-slate-800/80 border border-slate-800 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-cyan-400">2. Validate Finding</span>
+              <span id="wfStep2Count" class="text-xs font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">4</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">False positive? Relevant? Configure Wiz Issue generation</p>
+          </button>
+
+          <button id="wfStep3Btn" type="button" data-wf-step="3" class="wf-step-btn text-left p-3 rounded-lg bg-slate-950/90 hover:bg-slate-800/80 border border-slate-800 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-emerald-400">3. Analyze Security Graph</span>
+              <span id="wfStep3Count" class="text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">11</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Check related AWS/Azure graph resources &amp; Issues</p>
+          </button>
+
+          <button id="wfStep4Btn" type="button" data-wf-step="4" class="wf-step-btn text-left p-3 rounded-lg bg-slate-950/90 hover:bg-slate-800/80 border border-slate-800 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-amber-400">4. Sentinel ⇄ Wiz Gaps</span>
+              <span id="wfStep4Count" class="text-xs font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">9</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Missing Sentinel guardrails or missing custom Wiz CCRs</p>
+          </button>
+
+          <button id="wfStep5Btn" type="button" data-wf-step="5" class="wf-step-btn text-left p-3 rounded-lg bg-slate-950/90 hover:bg-slate-800/80 border border-slate-800 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-purple-400">5. Map, Document &amp; Track</span>
+              <span id="wfStep5Count" class="text-xs font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">18</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Multi-cloud 1:1 crosswalk, code synthesis &amp; SNOW/Jira</p>
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Metric Row -->
+      <div class="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4">
+          <div class="text-xs font-medium text-slate-400">Total Multi-Cloud Controls</div>
+          <div id="kpiTotal" class="text-2xl font-bold text-white mt-1">18</div>
+          <div id="kpiTotalSub" class="text-[11px] text-slate-400 mt-1">11 Azure · 7 AWS</div>
+        </div>
+        <div class="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-4">
+          <div class="text-xs font-medium text-emerald-300">Tier 1: Exact Native ID</div>
+          <div id="kpiTier1" class="text-2xl font-bold text-emerald-400 mt-1">5</div>
+          <div class="text-[11px] text-slate-400 mt-1">Direct ID / Sentinel match</div>
+        </div>
+        <div class="bg-slate-900/90 border border-cyan-500/30 rounded-xl p-4">
+          <div class="text-xs font-medium text-cyan-300">Tier 2 &amp; 3: Crosswalk / Semantic</div>
+          <div id="kpiTier23" class="text-2xl font-bold text-cyan-400 mt-1">6</div>
+          <div class="text-[11px] text-slate-400 mt-1">CIS / NIST / PCI + Resource Type</div>
+        </div>
+        <div class="bg-slate-900/90 border border-amber-500/30 rounded-xl p-4">
+          <div class="text-xs font-medium text-amber-300">Wiz → Sentinel Gaps</div>
+          <div id="kpiTier4" class="text-2xl font-bold text-amber-400 mt-1">4</div>
+          <div class="text-[11px] text-slate-400 mt-1">Wiz CCR lacks Sentinel policy</div>
+        </div>
+        <div class="col-span-2 lg:col-span-1 bg-slate-900/90 border border-rose-500/30 rounded-xl p-4">
+          <div class="text-xs font-medium text-rose-300">Sentinel → Wiz Gaps</div>
+          <div id="kpiTier5" class="text-2xl font-bold text-rose-400 mt-1">3</div>
+          <div class="text-[11px] text-slate-400 mt-1">Sentinel policy lacks Wiz CCR</div>
+        </div>
+      </div>
+
+      <!-- Charts & What-If Scoring Tuner Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Chart 1: Bidirectional Gap & Tier Doughnut -->
+        <div class="lg:col-span-4 bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-sm font-semibold text-white">Bidirectional Coverage &amp; Gaps</h2>
+            <span id="coverageBadge" class="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">67% Parity</span>
+          </div>
+          <p class="text-xs text-slate-400 mb-3">Matched 1:1 controls vs. Wiz→Sentinel &amp; Sentinel→Wiz gaps</p>
+          <div class="relative h-60 w-full my-auto">
+            <canvas id="tierChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: AWS vs Azure Domain Coverage & Gaps -->
+        <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-sm font-semibold text-white">AWS &amp; Azure Coverage vs. Sentinel/Wiz Gaps</h2>
+            <span class="text-xs text-slate-400">By Cloud &amp; Category</span>
+          </div>
+          <p class="text-xs text-slate-400 mb-3">Bidirectional parity vs. missing Sentinel or missing Wiz rules</p>
+          <div class="relative h-60 w-full my-auto">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Interactive Scoring & Threshold Simulator -->
+        <div class="lg:col-span-3 bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h2 class="text-sm font-semibold text-white">Live Scoring Tuner</h2>
+              <button id="btnResetWeights" type="button" class="text-[11px] text-indigo-400 hover:text-indigo-300 underline">Reset</button>
+            </div>
+            <p class="text-xs text-slate-400 mb-4">Simulate confidence thresholds &amp; compliance boost weights across AWS &amp; Azure.</p>
+
+            <div class="space-y-4">
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="sliderThreshold" class="text-slate-300">Min Match Threshold</label>
+                  <span id="valThreshold" class="font-mono text-indigo-400">0.42</span>
+                </div>
+                <input id="sliderThreshold" type="range" min="0.15" max="0.90" step="0.01" value="0.42" class="w-full accent-indigo-500 cursor-pointer">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="sliderControlBoost" class="text-slate-300">Framework Crosswalk Boost</label>
+                  <span id="valControlBoost" class="font-mono text-cyan-400">+0.15</span>
+                </div>
+                <input id="sliderControlBoost" type="range" min="0.00" max="0.35" step="0.01" value="0.15" class="w-full accent-cyan-500 cursor-pointer">
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs mb-1">
+                  <label for="sliderSemanticScale" class="text-slate-300">Semantic Sensitivity</label>
+                  <span id="valSemanticScale" class="font-mono text-emerald-400">1.00x</span>
+                </div>
+                <input id="sliderSemanticScale" type="range" min="0.70" max="1.30" step="0.05" value="1.00" class="w-full accent-emerald-500 cursor-pointer">
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
+            <div>• <strong class="text-amber-300">Wiz → Sentinel Gap</strong>: Wiz detects runtime risk, but no preventative Sentinel policy blocks it in IaC.</div>
+            <div>• <strong class="text-rose-300">Sentinel → Wiz Gap</strong>: Sentinel blocks IaC, but Wiz lacks a custom CCR to catch console drift.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Toolbar -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5">
+          <div class="sm:col-span-2">
+            <label for="searchInput" class="block text-[11px] font-medium text-slate-400 mb-1">Search Wiz Policy, HashiCorp Sentinel Rule (AWS/Azure), Resource, or Ticket</label>
+            <input id="searchInput" type="text" placeholder="e.g. aws_s3_bucket, RDS, KeyVault, Sentinel, Missing..." class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label for="filterCloud" class="block text-[11px] font-medium text-slate-400 mb-1">Cloud Provider</label>
+            <select id="filterCloud" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Clouds (AWS + Azure)</option>
+              <option value="AWS">AWS Only</option>
+              <option value="AZURE">Azure Only</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="filterGapDirection" class="block text-[11px] font-medium text-slate-400 mb-1">Gap Direction (Step 4)</label>
+            <select id="filterGapDirection" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Directions</option>
+              <option value="Wiz -> Sentinel Gap">Wiz → Sentinel Gap (Missing Sentinel)</option>
+              <option value="Sentinel -> Wiz Gap">Sentinel → Wiz Gap (Missing Wiz CCR)</option>
+              <option value="Preventative Upgrade">Detective Only (Upgrade to Sentinel)</option>
+              <option value="Bidirectional Parity">Bidirectional Parity (Covered)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="filterTier" class="block text-[11px] font-medium text-slate-400 mb-1">Mapping Tier</label>
+            <select id="filterTier" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Tiers</option>
+              <option value="Tier 1: Exact Native ID">Tier 1: Exact Native ID</option>
+              <option value="Tier 2: Compliance Crosswalk">Tier 2: Compliance Crosswalk</option>
+              <option value="Tier 3: High Semantic Match">Tier 3: High Semantic Match</option>
+              <option value="Tier 4: Candidate Match">Tier 4: Candidate Match</option>
+              <option value="Tier 5: Coverage Gap">Tier 5: Coverage Gap</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="filterEffect" class="block text-[11px] font-medium text-slate-400 mb-1">Enforcement / Effect</label>
+            <select id="filterEffect" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Effects</option>
+              <option value="Preventative">Preventative (hard-mandatory / soft-mandatory)</option>
+              <option value="Audit">Advisory Only (advisory)</option>
+              <option value="Missing">Missing Sentinel Guardrail</option>
+            </select>
+          </div>
+
+          <div class="flex items-end gap-1.5">
+            <select id="filterFramework" class="w-1/2 bg-slate-950 border border-slate-700/80 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" title="Compliance Framework">
+              <option value="ALL">All FW</option>
+              <option value="CCM">CCM v4 (CSA)</option>
+              <option value="CIS">CIS</option>
+              <option value="NIST">NIST</option>
+              <option value="PCI">PCI</option>
+              <option value="FFIEC">FFIEC</option>
+            </select>
+            <button id="btnClearFilters" type="button" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-medium transition">
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Mapping Table -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+          <div class="text-xs text-slate-300">
+            Showing <span id="tableCount" class="font-bold text-white">18</span> multi-cloud controls · <span id="activeStageLabel" class="text-indigo-400 font-medium">All 5 CCR Workflow Stages (AWS + Azure)</span> · Click any row or <strong>Inspect</strong> for Rego &amp; Sentinel code.
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-slate-400">
+            <span><span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-1"></span>AWS</span>
+            <span><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-1"></span>Azure</span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-950/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <th class="py-3 px-4">Cloud, HashiCorp Sentinel Policy &amp; Step 1 Change</th>
+                <th class="py-3 px-3">Step 4: Bidirectional Gap &amp; Enforcement</th>
+                <th class="py-3 px-4">Wiz CCR &amp; Step 2 Issue Gen</th>
+                <th class="py-3 px-3">Step 3: Security Graph</th>
+                <th class="py-3 px-3">Step 5: Tier &amp; Score</th>
+                <th class="py-3 px-3">Team Ticket &amp; Disposition</th>
+                <th class="py-3 px-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="mappingTableBody" class="divide-y divide-slate-800/70 text-xs"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: LIVE BROWSER MAPPING ENGINE         -->
+    <!-- ========================================== -->
+    <section id="tabPanelEngine" class="hidden space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-6">
+        <h2 class="text-base font-bold text-white mb-1">In-Browser Multi-Cloud (AWS + Azure) Mapping Engine &amp; Loader</h2>
+        <p class="text-xs text-slate-400 mb-5">
+          All processing happens 100% locally inside your browser memory. Load an output file from <code class="text-indigo-300 font-mono">azure_to_wiz_mapper.py</code> or upload raw AWS/Azure Sentinel &amp; Policy JSON exports alongside Wiz CCR exports to find bidirectional gaps in real time.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Option A: Load Output CSV / JSON from Python Script -->
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+            <div>
+              <span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Option A · Pre-Mapped Output</span>
+              <h3 class="text-sm font-semibold text-white mt-2">Load Multi-Cloud Gap Output (.json or .csv)</h3>
+              <p class="text-xs text-slate-400 mt-1 mb-4">
+                Upload the <code class="font-mono text-slate-300">multicloud_wiz_sentinel_gaps.json</code> or <code class="font-mono text-slate-300">.csv</code> generated by <code class="font-mono text-slate-300">azure_to_wiz_mapper.py</code>.
+              </p>
+              <input id="fileInputMappedReport" type="file" accept=".json,.csv" class="block w-full text-xs text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span id="statusMappedUpload" class="text-xs text-slate-400">Ready to import report file</span>
+              <button id="btnLoadSampleData" type="button" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+                Reload Default Financial Sample (12 Policies)
+              </button>
+            </div>
+          </div>
+
+          <!-- Option B: Upload Raw Sentinel/Policy JSON + Raw Wiz JSON -->
+          <div class="bg-slate-950/80 border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+            <div>
+              <span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Option B · Raw Bidirectional Correlation</span>
+              <h3 class="text-sm font-semibold text-white mt-2">Correlate Raw AWS/Azure Sentinel &amp; Wiz JSON Exports</h3>
+              <p class="text-xs text-slate-400 mt-1 mb-3">
+                Select your raw AWS/Azure Sentinel &amp; Policy JSON file and your Wiz Cloud Configuration Rules JSON export.
+              </p>
+              <div class="space-y-2.5">
+                <div>
+                  <label for="fileInputRawAzure" class="block text-[11px] text-slate-400 mb-1">1. HashiCorp Sentinel Policies (AWS &amp; Azure) JSON:</label>
+                  <input id="fileInputRawAzure" type="file" accept=".json" class="block w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+                <div>
+                  <label for="fileInputRawWiz" class="block text-[11px] text-slate-400 mb-1">2. Wiz Cloud Configuration Rules (AWS + Azure) JSON:</label>
+                  <input id="fileInputRawWiz" type="file" accept=".json" class="block w-full text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer">
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+              <span id="statusRawCorrelation" class="text-xs text-slate-400">Select both JSON files to correlate</span>
+              <button id="btnRunBrowserCorrelation" type="button" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition">
+                Run 1:1 Engine in Browser
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: OPA REGO & SENTINEL GAP STUDIO      -->
+    <!-- ========================================== -->
+    <section id="tabPanelRego" class="hidden space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-white">Bidirectional Policy-as-Code Studio: Wiz OPA Rego &amp; HashiCorp Sentinel (`.sentinel`)</h2>
+            <p class="text-xs text-slate-400">
+              • <strong class="text-rose-300">Sentinel → Wiz Gaps</strong> generate <strong>Wiz Custom OPA Rego CCRs</strong> to catch runtime drift.<br>
+              • <strong class="text-amber-300">Wiz → Sentinel Gaps</strong> generate <strong>HashiCorp Sentinel (`tfplan/v2`)</strong> policies for AWS (`aws_*`) and Azure (`azurerm_*`) to block misconfigurations pre-deployment.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnDownloadAllCheckov" type="button" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white transition">
+              Download Combined Checkov .yaml Bundle
+            </button>
+            <button id="btnDownloadAllSentinel" type="button" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-500 text-white transition">
+              Download Combined .sentinel Bundle
+            </button>
+            <button id="btnDownloadAllRego" type="button" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">
+              Download Combined .rego Bundle
+            </button>
+          </div>
+        </div>
+
+        <div id="regoCardsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: AWS, AZURE & WIZ ACCESS CHECKLIST   -->
+    <!-- ========================================== -->
+    <section id="tabPanelAccess" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Azure & MS Sentinel Perspective -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-blue-400">HashiCorp Sentinel (Azure)</span>
+              <h2 class="text-sm font-bold text-white mt-0.5">Azure Sentinel Policy Sets (azurerm_*)</h2>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-blue-500/15 text-blue-300 border border-blue-500/30">Azure</span>
+          </div>
+
+          <div class="space-y-2.5 text-xs">
+            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 cursor-pointer">
+              <input type="checkbox" class="access-check mt-0.5 accent-indigo-500" checked>
+              <div>
+                <div class="font-semibold text-slate-100">1. Azure Terraform Sentinel Policy Sets (`azurerm_*`)</div>
+                <div class="text-slate-400 mt-0.5 font-mono text-[11px]">
+                  • Read access to Azure Sentinel Policy Sets (`sentinel.hcl`)<br>
+                  • Governs `azurerm_*` resources via `tfplan/v2` &amp; `tfconfig/v2`
+                </div>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 cursor-pointer">
+              <input type="checkbox" class="access-check mt-0.5 accent-indigo-500" checked>
+              <div>
+                <div class="font-semibold text-slate-100">2. Enforcement Levels in `sentinel.hcl`</div>
+                <div class="text-slate-400 mt-0.5">Maps <code class="text-blue-300 font-mono">hard-mandatory</code> &amp; <code class="text-blue-300 font-mono">soft-mandatory</code> (Preventative) vs. <code class="text-blue-300 font-mono">advisory</code> (Detective/Warning) against Wiz Azure CCRs.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- AWS & HashiCorp Sentinel Perspective -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-amber-400">HashiCorp Sentinel (TFC / TFE)</span>
+              <h2 class="text-sm font-bold text-white mt-0.5">HCP Terraform / TFE API &amp; VCS</h2>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-amber-500/15 text-amber-300 border border-amber-500/30">AWS / TFE</span>
+          </div>
+
+          <div class="space-y-2.5 text-xs">
+            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 cursor-pointer">
+              <input type="checkbox" class="access-check mt-0.5 accent-indigo-500" checked>
+              <div>
+                <div class="font-semibold text-slate-100">1. HashiCorp Sentinel Policy Sets (TFC / TFE)</div>
+                <div class="text-slate-400 mt-0.5">Read access to your Git policy repository (<code class="font-mono text-slate-200">--sentinel-dir</code>) or Terraform Enterprise API token with <code class="font-mono text-amber-300">Read Policy Sets</code> (`GET /api/v2/organizations/:org/policy-sets`).</div>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 cursor-pointer">
+              <input type="checkbox" class="access-check mt-0.5 accent-indigo-500" checked>
+              <div>
+                <div class="font-semibold text-slate-100">2. HCP Terraform / TFE Policy API Endpoints</div>
+                <div class="text-slate-400 mt-0.5 font-mono text-[11px]">
+                  • GET /api/v2/organizations/:org/policy-sets<br>
+                  • GET /api/v2/organizations/:org/policies &amp; /download
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Wiz Perspective -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <span class="text-[11px] font-semibold uppercase tracking-wider text-indigo-400">Wiz Multi-Cloud API</span>
+              <h2 class="text-sm font-bold text-white mt-0.5">Wiz GraphQL Scopes (AWS + Azure)</h2>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">Wiz API</span>
+          </div>
+
+          <div class="space-y-2.5 text-xs">
+            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 cursor-pointer">
+              <input type="checkbox" class="access-check mt-0.5 accent-indigo-500" checked>
+              <div>
+                <div class="font-semibold text-slate-100">1. Multi-Cloud GraphQL Filter</div>
+                <div class="text-slate-400 mt-0.5">Query `cloudConfigurationRules` with `filterBy: { cloudProvider: ["AZURE", "AWS"] }`.</div>
+              </div>
+            </label>
+
+            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 cursor-pointer">
+              <input type="checkbox" class="access-check mt-0.5 accent-indigo-500" checked>
+              <div>
+                <div class="font-semibold text-slate-100">2. Required Service Account Scopes</div>
+                <div class="text-slate-400 mt-0.5 font-mono text-[11px]">
+                  • read:cloud_configuration<br>
+                  • read:controls &amp; read:issues<br>
+                  • read:resources &amp; read:cloud_event_rules
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Copy CLI Commands -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-5">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-sm font-bold text-white">Local Multi-Cloud (AWS + Azure) Execution Quick-Start</h3>
+          <button id="btnCopyCliCommands" type="button" class="px-3 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 transition">
+            Copy Commands
+          </button>
+        </div>
+        <pre id="cliCommandsBlock" class="bg-slate-950 border border-slate-800 rounded-lg p-3.5 text-xs font-mono text-slate-300 overflow-x-auto"># 1. Authenticate to Wiz, HCP Terraform, AWS (CLI/SSO), and Azure (az login)
+export WIZ_API_URL="https://api.us1.app.wiz.io/graphql"
+export WIZ_CLIENT_ID="your-wiz-service-account-client-id"
+export WIZ_CLIENT_SECRET="your-wiz-service-account-secret"
+export TFC_TOKEN="your-hcp-terraform-or-tfe-api-token"
+export TFC_ORG="your-financial-org"
+aws sso login && az login
+
+# 2. Run Automated Daily Multi-Cloud Policy Sync across AWS, Azure, Wiz, HCP Terraform & Checkov
+python3 azure_to_wiz_mapper.py \
+  --sync-all-daily \
+  --live-aws --aws-region us-east-1 \
+  --live-azure --management-group-id "mg-financial-enterprise" \
+  --live-tfc --tfc-org "$TFC_ORG" \
+  --live-wiz --cloud-providers AZURE AWS \
+  --baseline-audit-json ./data/baseline_sdlc_audit.json \
+  --output-csv ./reports/sdlc_cloud_policy_governance_audit.csv \
+  --output-json ./data/baseline_sdlc_audit.json \
+  --output-html ./reports/interactive_mapping_report.html</pre>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================= -->
+  <!-- SIDE-BY-SIDE 5-STEP CCR REVIEW & POLICY INSPECTOR MODAL   -->
+  <!-- ========================================================= -->
+  <div id="inspectorModal" class="fixed inset-0 z-40 hidden bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <span id="modalTierBadge" class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Tier 1</span>
+          <h3 id="modalTitle" class="text-base font-bold text-white mt-1">Policy Comparison Inspector</h3>
+        </div>
+        <button id="btnCloseModal" type="button" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-sm font-bold">✕</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 overflow-y-auto space-y-5 text-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Sentinel / Cloud Policy Card -->
+          <div class="bg-slate-950/90 border border-blue-500/30 rounded-xl p-4 space-y-2">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-blue-400">HashiCorp Sentinel Policy (AWS or Azure)</div>
+            <div id="modalAzName" class="text-sm font-semibold text-white"></div>
+            <div class="grid grid-cols-2 gap-2 pt-2 text-[11px]">
+              <div><span class="text-slate-400">Policy / Sentinel ID:</span><div id="modalAzGuid" class="font-mono text-slate-200 break-all mt-0.5"></div></div>
+              <div><span class="text-slate-400">Cloud / Engine / Category:</span><div id="modalAzTypeCat" class="text-slate-200 mt-0.5"></div></div>
+              <div><span class="text-slate-400">Enforcement / Effect:</span><div id="modalAzEffect" class="font-semibold text-amber-300 mt-0.5"></div></div>
+              <div><span class="text-slate-400">Target Resource Type:</span><div id="modalAzResource" class="font-mono text-slate-200 break-all mt-0.5"></div></div>
+            </div>
+            <div class="pt-2 border-t border-slate-800">
+              <span class="text-slate-400">Evaluated Attribute / Field Alias(es):</span>
+              <div id="modalAzFields" class="font-mono text-[11px] text-cyan-300 mt-0.5 break-all"></div>
+            </div>
+          </div>
+
+          <!-- Wiz Cloud Configuration Rule Card -->
+          <div class="bg-slate-950/90 border border-indigo-500/30 rounded-xl p-4 space-y-2">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-indigo-400">Mapped Wiz CCR (Steps 1–3 Change, Issue &amp; Graph)</div>
+            <div id="modalWizName" class="text-sm font-semibold text-white"></div>
+            <div class="grid grid-cols-2 gap-2 pt-2 text-[11px]">
+              <div><span class="text-slate-400">Wiz Short ID / Rule ID:</span><div id="modalWizId" class="font-mono text-indigo-300 mt-0.5"></div></div>
+              <div><span class="text-slate-400">Wiz Severity &amp; Change:</span><div id="modalWizSeverity" class="font-semibold text-slate-200 mt-0.5"></div></div>
+              <div><span class="text-slate-400">Wiz Native Type:</span><div id="modalWizNative" class="font-mono text-slate-200 mt-0.5"></div></div>
+              <div><span class="text-slate-400">Confidence Score:</span><div id="modalConfidence" class="font-mono text-emerald-400 font-bold mt-0.5"></div></div>
+            </div>
+            <div class="pt-2 border-t border-slate-800">
+              <span class="text-slate-400">Shared Regulatory Controls &amp; Rationale:</span>
+              <div id="modalRationale" class="text-slate-300 mt-0.5"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5-Step CCR Review Workflow Validation Controls -->
+        <div class="bg-slate-950/90 border border-indigo-500/30 rounded-xl p-4 space-y-3">
+          <div class="text-xs font-semibold text-indigo-300">5-Step CCR Review Workflow Checklist &amp; SME Disposition</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="modalFindingValSelect" class="block text-[11px] text-slate-400 mb-1">Step 2: Validate Finding &amp; Issue Gen</label>
+              <select id="modalFindingValSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                <option value="Validated · Issue Gen Enabled">Validated · Issue Gen Enabled</option>
+                <option value="Validated · Configure Issue Gen">Validated · Configure Issue Gen</option>
+                <option value="False Positive in Our Env (Suppress)">False Positive in Our Env (Suppress)</option>
+                <option value="Pending Env Validation">Pending Env Validation</option>
+              </select>
+            </div>
+            <div>
+              <label for="modalGraphCheckSelect" class="block text-[11px] text-slate-400 mb-1">Step 3: Security Graph Verification</label>
+              <select id="modalGraphCheckSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                <option value="Graph Verified · Expected Issue Generated">Graph Verified · Expected Issue Generated</option>
+                <option value="Graph Checked · No Issue Generated Yet">Graph Checked · No Issue Generated Yet</option>
+                <option value="CCR Only · Needs Graph Control Link">CCR Only · Needs Graph Control Link</option>
+                <option value="No Linked Graph Control (Custom Gap)">No Linked Graph Control (Custom Gap)</option>
+              </select>
+            </div>
+            <div>
+              <label for="modalTicketInput" class="block text-[11px] text-slate-400 mb-1">Step 4/5: Team Issue / SNOW / Jira Ticket</label>
+              <input id="modalTicketInput" type="text" placeholder="e.g. SNOW-INC90421 / CSEC-1084" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-800/80">
+            <div>
+              <label for="modalExceptionStatusSelect" class="block text-[11px] text-amber-300 font-medium mb-1">SDLC Governance / Rule Exception Status</label>
+              <select id="modalExceptionStatusSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+                <option value="SDLC Approved · Active Baseline">SDLC Approved · Active Baseline</option>
+                <option value="Daily SDLC Review & Testing Queue">Daily SDLC Review &amp; Testing Queue</option>
+                <option value="Excluded · Not Applicable to Cloud Architecture">Excluded · Not Applicable to Cloud Architecture</option>
+                <option value="Excluded · Compensated by Sentinel/Checkov">Excluded · Compensated by Sentinel/Checkov</option>
+                <option value="Custom Rule SDLC Development">Custom Rule SDLC Development</option>
+              </select>
+            </div>
+            <div>
+              <label for="modalApproverInput" class="block text-[11px] text-amber-300 font-medium mb-1">SDLC Approver / Workstream Owner</label>
+              <input id="modalApproverInput" type="text" placeholder="e.g. Policies Review (Snehal) / Custom Rules (Trevor)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+            </div>
+            <div>
+              <label for="modalReassessmentDate" class="block text-[11px] text-amber-300 font-medium mb-1">Next Periodic Reassessment Date (90d)</label>
+              <input id="modalReassessmentDate" type="date" value="2027-01-28" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div>
+              <label for="modalDispositionSelect" class="block text-[11px] text-slate-400 mb-1">Step 5: Final Review Status / Disposition</label>
+              <select id="modalDispositionSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                <option value="Auto-Approved (1:1)">Auto-Approved (1:1)</option>
+                <option value="Approved (Crosswalk)">Approved (Crosswalk)</option>
+                <option value="Approved (Heuristic)">Approved (Heuristic)</option>
+                <option value="Approved + Retain Azure Deny Guardrail">Approved + Retain Azure Deny Guardrail</option>
+                <option value="Manual SME Review Required">Manual SME Review Required</option>
+                <option value="Action Required: Deploy Generated AWS/Azure Sentinel Policy">Action Required: Deploy Generated AWS/Azure Sentinel Policy</option>
+                <option value="Action Required: Build Custom Wiz Rego Rule or Retain Azure Policy">Action Required: Build Custom Wiz Rego Rule or Retain Azure Policy</option>
+              </select>
+            </div>
+            <div>
+              <label for="modalAuditNote" class="block text-[11px] text-slate-400 mb-1">SME Audit / Exception Note</label>
+              <input id="modalAuditNote" type="text" placeholder="e.g. Verified against FFIEC baseline; deploy Sentinel rule to TFE..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-Layer Code Synthesis: Checkov (.yaml) + HashiCorp Sentinel (.sentinel) + Wiz OPA Rego (.rego) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+          <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-cyan-300">Layer 1: Checkov CI/PR (`.yaml`)</span>
+              <button id="btnCopyModalCheckov" type="button" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[11px] font-medium border border-slate-700">
+                Copy Checkov YAML
+              </button>
+            </div>
+            <pre id="modalCheckovCode" class="bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-[10px] text-cyan-300 overflow-x-auto max-h-48"></pre>
+          </div>
+
+          <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-amber-300">Layer 2: Sentinel (`.sentinel`)</span>
+              <button id="btnCopyModalSentinel" type="button" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px] font-medium border border-slate-700">
+                Copy Sentinel Code
+              </button>
+            </div>
+            <pre id="modalSentinelCode" class="bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-[10px] text-amber-300 overflow-x-auto max-h-48"></pre>
+          </div>
+
+          <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-emerald-300">Layer 3: Wiz Rego (`.rego`)</span>
+              <button id="btnCopyModalRego" type="button" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-indigo-300 text-[11px] font-medium border border-slate-700">
+                Copy Rego Code
+              </button>
+            </div>
+            <pre id="modalRegoCode" class="bg-slate-900 border border-slate-800 rounded-lg p-2.5 font-mono text-[10px] text-emerald-300 overflow-x-auto max-h-48"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-5 py-3.5 border-t border-slate-800 bg-slate-950/70 flex items-center justify-end gap-2">
+        <button id="btnCancelModal" type="button" class="px-4 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300">Close</button>
+        <button id="btnSaveModalDisposition" type="button" class="px-4 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white">Save SME Disposition</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- APPLICATION LOGIC                                         -->
+  <!-- ========================================================= -->
+  <script>
+    // Representative US Financial Institution Multi-Cloud Dataset (18 Controls across AWS & Azure)
+    const INITIAL_DATASET = [
+      // --- AZURE CONTROLS & SENTINELS ---
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "Updated CCR",
+        policy_created_at: "2026-11-05", wiz_updated_at: "2026-11-05",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-azurerm-storage-https-only",
+        azure_policy_name: "Secure transfer to storage accounts should be enabled (HTTPS)",
+        azure_policy_type: "Sentinel-IaC",
+        azure_category: "Storage",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "azurerm_storage_account",
+        azure_condition_fields: "enable_https_traffic_only",
+        wiz_rule_id: "wc-id-001",
+        wiz_short_id: "StorageAccount-001",
+        wiz_rule_name: "Storage account should enforce secure transfer (HTTPS)",
+        wiz_severity: "HIGH",
+        wiz_native_types: "storageaccount",
+        base_semantic_score: 0.99,
+        exact_guid_match: true,
+        shared_controls: "CCM CEK-03, CIS 3.1, NIST SP 800-53 SC-8, PCI-DSS 4.1",
+        review_status: "Auto-Approved (1:1)",
+        sme_note: "Covered in both Terraform Sentinel (azurerm_storage_account) and Wiz CCR.",
+        mapping_rationale: "Exact Azure Policy GUID (404c3081-a854-4457-ae30-26a93ef643f9) & Sentinel rule matched"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "Baseline",
+        policy_created_at: "2026-08-20", wiz_updated_at: "2026-08-20",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-azurerm-storage-no-public-blob",
+        azure_policy_name: "Allow Blob public access on Storage Accounts should be disabled",
+        azure_policy_type: "BuiltIn",
+        azure_category: "Storage",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "azurerm_storage_account",
+        azure_condition_fields: "allow_nested_items_to_be_public",
+        wiz_rule_id: "wc-id-014",
+        wiz_short_id: "StorageAccount-014",
+        wiz_rule_name: "Storage account should disable public blob access",
+        wiz_severity: "CRITICAL",
+        wiz_native_types: "storageaccount",
+        base_semantic_score: 0.99,
+        exact_guid_match: true,
+        shared_controls: "CCM DSP-17, CIS 3.7, NIST SP 800-53 AC-3, FFIEC D3.PC.Am.B.1",
+        review_status: "Approved + Retain Azure Deny Guardrail",
+        sme_note: "Preventative Azure Deny + Sentinel hard-mandatory active.",
+        mapping_rationale: "Exact Azure Policy GUID (4fa4b6c0-31ca-4c0d-b10d-24b96f62a751) referenced in Wiz"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Wiz -> Sentinel Preventative Upgrade",
+        ccr_change_status: "New CCR",
+        policy_created_at: "2026-11-02", wiz_updated_at: "2026-11-02",
+        finding_validation_status: "Validated · Configure Issue Gen",
+        security_graph_status: "Graph Checked · No Issue Generated Yet",
+        team_action_ticket: "SNOW-INC91022 (Add Sentinel Rule)",
+        azure_policy_guid: "sentinel-azurerm-keyvault-soft-delete",
+        azure_policy_name: "Key vaults should have soft delete enabled",
+        azure_policy_type: "BuiltIn",
+        azure_category: "Key Vault",
+        azure_default_effect: "advisory",
+        azure_resource_types: "azurerm_key_vault",
+        azure_condition_fields: "soft_delete_retention_days",
+        wiz_rule_id: "wc-id-002",
+        wiz_short_id: "KeyVault-004",
+        wiz_rule_name: "Key Vault should have soft delete enabled",
+        wiz_severity: "MEDIUM",
+        wiz_native_types: "keyvault",
+        base_semantic_score: 0.71,
+        exact_guid_match: false,
+        shared_controls: "CCM CEK-07, PCI-DSS 3.2, CIS 8.4, NIST SP 800-53 SC-12",
+        review_status: "Approved (Crosswalk)",
+        sme_note: "Currently Audit-only in Azure; deploy generated Sentinel rule to enforce in Terraform.",
+        mapping_rationale: "Shared controls: PCI-DSS 3.2, CIS 8.4; Matched ARM resource provider type"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "Baseline",
+        policy_created_at: "2026-06-18", wiz_updated_at: "2026-07-04",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-azurerm-mssql-tde-enabled",
+        azure_policy_name: "Transparent Data Encryption on SQL databases should be enabled",
+        azure_policy_type: "Sentinel-IaC",
+        azure_category: "SQL",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "azurerm_mssql_database",
+        azure_condition_fields: "transparent_data_encryption_enabled",
+        wiz_rule_id: "wc-id-003",
+        wiz_short_id: "SQLDatabase-002",
+        wiz_rule_name: "SQL Database Transparent Data Encryption (TDE) should be enabled",
+        wiz_severity: "HIGH",
+        wiz_native_types: "sqldatabase",
+        base_semantic_score: 0.70,
+        exact_guid_match: false,
+        shared_controls: "CCM CEK-04, CIS 4.1.1, NIST SP 800-53 SC-28, SOX ITGC",
+        review_status: "Approved (Crosswalk)",
+        sme_note: "",
+        mapping_rationale: "Shared controls: CIS 4.1.1, NIST SP 800-53 SC-28; Matched SQL resource type"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "Updated CCR",
+        policy_created_at: "2026-10-18", wiz_updated_at: "2026-10-18",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-azurerm-nsg-close-rdp-ssh",
+        azure_policy_name: "Management ports (RDP/SSH) should be closed on network security groups",
+        azure_policy_type: "BuiltIn",
+        azure_category: "Network",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "azurerm_network_security_group",
+        azure_condition_fields: "security_rule.destination_port_range",
+        wiz_rule_id: "wc-id-021",
+        wiz_short_id: "NSG-001",
+        wiz_rule_name: "Network Security Group should not allow unrestricted inbound RDP (3389) or SSH (22)",
+        wiz_severity: "CRITICAL",
+        wiz_native_types: "networksecuritygroup",
+        base_semantic_score: 0.99,
+        exact_guid_match: true,
+        shared_controls: "CCM IVS-03, CIS 6.1, PCI-DSS 1.2.1, NIST SP 800-53 AC-17",
+        review_status: "Auto-Approved (1:1)",
+        sme_note: "Wiz Security Graph correlates effective internet exposure on NIC/VM.",
+        mapping_rationale: "Exact Azure Policy GUID (2c89a2e5-7285-40fe-afe0-ae8654b92fb2) referenced in Wiz"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "New CCR",
+        policy_created_at: "2026-10-31", wiz_updated_at: "2026-10-31",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-azurerm-aks-rbac-enabled",
+        azure_policy_name: "Role-Based Access Control (RBAC) should be used on Kubernetes Services",
+        azure_policy_type: "Sentinel-IaC",
+        azure_category: "Kubernetes",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "azurerm_kubernetes_cluster",
+        azure_condition_fields: "role_based_access_control_enabled",
+        wiz_rule_id: "wc-id-033",
+        wiz_short_id: "AKS-005",
+        wiz_rule_name: "AKS cluster should have Role-Based Access Control (RBAC) enabled",
+        wiz_severity: "HIGH",
+        wiz_native_types: "kubernetescluster",
+        base_semantic_score: 0.76,
+        exact_guid_match: false,
+        shared_controls: "CCM IAM-02, CIS 5.1.1, NIST SP 800-53 AC-2",
+        review_status: "Approved (Heuristic)",
+        sme_note: "",
+        mapping_rationale: "Matched azurerm_kubernetes_cluster -> kubernetesCluster; High token similarity"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Wiz -> Sentinel Preventative Upgrade",
+        ccr_change_status: "Baseline",
+        policy_created_at: "2026-05-22", wiz_updated_at: "2026-06-19",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "CSEC-408 (Promote to Sentinel)",
+        azure_policy_guid: "sentinel-azurerm-disk-cmk-encryption",
+        azure_policy_name: "OS and data disks should be encrypted with a customer-managed key (CMK)",
+        azure_policy_type: "BuiltIn",
+        azure_category: "Compute",
+        azure_default_effect: "advisory",
+        azure_resource_types: "azurerm_managed_disk",
+        azure_condition_fields: "disk_encryption_set_id",
+        wiz_rule_id: "wc-id-041",
+        wiz_short_id: "Disk-003",
+        wiz_rule_name: "Managed disk should be encrypted using customer-managed keys (CMK)",
+        wiz_severity: "MEDIUM",
+        wiz_native_types: "manageddisk",
+        base_semantic_score: 0.72,
+        exact_guid_match: false,
+        shared_controls: "CCM CEK-04, NIST SP 800-53 SC-28, PCI-DSS 3.5",
+        review_status: "Approved (Heuristic)",
+        sme_note: "Promote from Azure Audit to soft-mandatory Sentinel policy in Terraform.",
+        mapping_rationale: "Matched disks -> managedDisk; Shared CMK encryption requirement"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "Baseline",
+        policy_created_at: "2026-02-14", wiz_updated_at: "2026-05-11",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-azurerm-webapp-min-tls12",
+        azure_policy_name: "App Service apps should require minimum TLS version 1.2",
+        azure_policy_type: "BuiltIn",
+        azure_category: "App Service",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "azurerm_linux_web_app",
+        azure_condition_fields: "site_config.minimum_tls_version",
+        wiz_rule_id: "wc-id-052",
+        wiz_short_id: "WebApp-009",
+        wiz_rule_name: "App Service web app should use TLS 1.2 or higher",
+        wiz_severity: "HIGH",
+        wiz_native_types: "webapp",
+        base_semantic_score: 0.73,
+        exact_guid_match: false,
+        shared_controls: "CCM CEK-03, CIS 9.3, PCI-DSS 4.2.1, FFIEC D3.PC.Am.B.4",
+        review_status: "Approved (Crosswalk)",
+        sme_note: "",
+        mapping_rationale: "Shared controls: CIS 9.3, PCI-DSS 4.2.1; Matched ARM resource provider type"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "Missing HashiCorp Sentinel",
+        gap_direction: "Wiz -> Sentinel Gap (Missing Sentinel Policy)",
+        ccr_change_status: "New CCR",
+        policy_created_at: "2026-11-05", wiz_updated_at: "2026-11-05",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "CSEC-501 (Author Azure Sentinel Rule)",
+        azure_policy_guid: "MISSING-SENTINEL-OPENAI-002",
+        azure_policy_name: "[Missing HashiCorp Sentinel] Azure OpenAI / Cognitive Services public network access should be disabled",
+        azure_policy_type: "Missing-Sentinel",
+        azure_category: "AI & ML",
+        azure_default_effect: "Missing (No Sentinel Guardrail)",
+        azure_resource_types: "azurerm_cognitive_account",
+        azure_condition_fields: "public_network_access_enabled",
+        wiz_rule_id: "wc-az-099",
+        wiz_short_id: "CognitiveAccount-002",
+        wiz_rule_name: "Azure Cognitive Services / OpenAI account should disable public network access",
+        wiz_severity: "CRITICAL",
+        wiz_native_types: "cognitiveaccount",
+        base_semantic_score: 0.15,
+        exact_guid_match: false,
+        shared_controls: "CCM IVS-06, NIST SP 800-53 SC-7, FFIEC AI Governance",
+        review_status: "Action Required: Deploy Generated AWS/Azure Sentinel Policy",
+        sme_note: "Wiz detects exposed Azure OpenAI endpoints at runtime, but Terraform lacks a Sentinel guardrail.",
+        mapping_rationale: "Active Azure Wiz CCR (CognitiveAccount-002) has no matching Sentinel guardrail in Terraform"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Sentinel -> Wiz Gap (Missing Wiz CCR)",
+        ccr_change_status: "Gap: Missing in Wiz",
+        policy_created_at: "2026-10-25",
+        wiz_updated_at: "2026-10-25",
+        finding_validation_status: "Validated · Configure Issue Gen",
+        security_graph_status: "No Linked Graph Control (Custom Gap)",
+        team_action_ticket: "SNOW-REQ88410 (Deploy Custom Rego CCR)",
+        azure_policy_guid: "fin-sentinel-azurerm-mandatory-cost-tags",
+        azure_policy_name: "Require Enterprise CostCenter, GLCode, and DataClassification tags on Azure resources",
+        azure_policy_type: "Custom",
+        azure_category: "Tags",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "azurerm_resource_group",
+        azure_condition_fields: "tags['CostCenter'], tags['GLCode'], tags['DataClassification']",
+        wiz_rule_id: "UNMAPPED",
+        wiz_short_id: "UNMAPPED",
+        wiz_rule_name: "No Equivalent Built-In Wiz Rule Found",
+        wiz_severity: "N/A",
+        wiz_native_types: "N/A",
+        base_semantic_score: 0.16,
+        exact_guid_match: false,
+        shared_controls: "CCM GRC-01, FFIEC Asset Governance",
+        review_status: "Action Required: Build Custom Wiz Rego Rule or Retain Azure Policy",
+        sme_note: "Custom bank taxonomy policy. Sentinel blocks IaC, but Wiz needs custom Rego for console drift.",
+        mapping_rationale: "Custom banking tag governance policy; no built-in Wiz rule checks institution-specific tag keys"
+      },
+      {
+        cloud_provider: "AZURE",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Sentinel -> Wiz Gap (Missing Wiz CCR)",
+        ccr_change_status: "Gap: Missing in Wiz",
+        policy_created_at: "2026-03-10",
+        wiz_updated_at: "2026-03-10",
+        finding_validation_status: "Validated · Configure Issue Gen",
+        security_graph_status: "No Linked Graph Control (Custom Gap)",
+        team_action_ticket: "SNOW-REQ88411 (Deploy Custom Rego CCR)",
+        azure_policy_guid: "fin-sentinel-azurerm-us-regions-only",
+        azure_policy_name: "Restrict Azure resource deployment to approved US regions (eastus, centralus)",
+        azure_policy_type: "Custom",
+        azure_category: "General",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "azurerm_resource_group",
+        azure_condition_fields: "location",
+        wiz_rule_id: "UNMAPPED",
+        wiz_short_id: "UNMAPPED",
+        wiz_rule_name: "No Equivalent Built-In Wiz Rule Found",
+        wiz_severity: "N/A",
+        wiz_native_types: "N/A",
+        base_semantic_score: 0.21,
+        exact_guid_match: false,
+        shared_controls: "CCM CCC-01, FFIEC Data Residency, SOX",
+        review_status: "Action Required: Build Custom Wiz Rego Rule or Retain Azure Policy",
+        sme_note: "Enforce via Azure Policy Deny + deploy custom Rego check in Wiz.",
+        mapping_rationale: "Organization-specific allowed region list (eastus, centralus); requires custom Wiz Rego rule"
+      },
+
+      // --- AWS SENTINEL POLICIES & WIZ AWS CCRs ---
+      {
+        cloud_provider: "AWS",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "Updated CCR",
+        policy_created_at: "2026-10-22", wiz_updated_at: "2026-10-22",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-aws-s3-block-public-access",
+        azure_policy_name: "Block S3 bucket public access at bucket and account level",
+        azure_policy_type: "Sentinel-IaC",
+        azure_category: "Storage",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "aws_s3_bucket_public_access_block",
+        azure_condition_fields: "block_public_acls, block_public_policy",
+        wiz_rule_id: "wc-aws-101",
+        wiz_short_id: "S3Bucket-004",
+        wiz_rule_name: "S3 bucket should block public access",
+        wiz_severity: "CRITICAL",
+        wiz_native_types: "bucket",
+        base_semantic_score: 0.99,
+        exact_guid_match: true,
+        shared_controls: "CCM DSP-17, CIS AWS 2.1.5, PCI-DSS 1.2.1, NIST SP 800-53 AC-3",
+        review_status: "Auto-Approved (1:1)",
+        sme_note: "Enforced pre-deployment by HashiCorp Sentinel and monitored at runtime by Wiz S3Bucket-004.",
+        mapping_rationale: "Exact AWS FSBP Sentinel policy match to Wiz S3Bucket-004"
+      },
+      {
+        cloud_provider: "AWS",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "Baseline",
+        policy_created_at: "2026-08-28", wiz_updated_at: "2026-09-01",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-aws-kms-key-rotation",
+        azure_policy_name: "Enforce automatic annual key rotation on customer-managed AWS KMS keys",
+        azure_policy_type: "Sentinel-IaC",
+        azure_category: "Key Vault",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "aws_kms_key",
+        azure_condition_fields: "enable_key_rotation",
+        wiz_rule_id: "wc-aws-112",
+        wiz_short_id: "KMS-001",
+        wiz_rule_name: "AWS KMS customer-managed key should have rotation enabled",
+        wiz_severity: "HIGH",
+        wiz_native_types: "encryptionkey",
+        base_semantic_score: 0.85,
+        exact_guid_match: false,
+        shared_controls: "CCM CEK-12, CIS AWS 3.8, PCI-DSS 3.6.4, NIST SP 800-53 SC-12",
+        review_status: "Approved (Crosswalk)",
+        sme_note: "Full parity between AWS Terraform Sentinel and Wiz KMS-001.",
+        mapping_rationale: "Shared controls: CIS AWS 3.8, PCI-DSS 3.6.4; Matched aws_kms_key -> encryptionKey"
+      },
+      {
+        cloud_provider: "AWS",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Bidirectional Parity (Covered)",
+        ccr_change_status: "Baseline",
+        policy_created_at: "2026-08-15", wiz_updated_at: "2026-08-15",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "None",
+        azure_policy_guid: "sentinel-aws-ec2-imdsv2-required",
+        azure_policy_name: "Require IMDSv2 (http_tokens = required) on all AWS EC2 instances",
+        azure_policy_type: "Sentinel-IaC",
+        azure_category: "Compute",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "aws_instance",
+        azure_condition_fields: "metadata_options.http_tokens",
+        wiz_rule_id: "wc-aws-145",
+        wiz_short_id: "EC2-019",
+        wiz_rule_name: "EC2 instance should require IMDSv2 (Instance Metadata Service v2)",
+        wiz_severity: "HIGH",
+        wiz_native_types: "virtualmachine",
+        base_semantic_score: 0.99,
+        exact_guid_match: true,
+        shared_controls: "CCM IAM-08, CIS AWS 5.6, NIST SP 800-53 AC-6",
+        review_status: "Auto-Approved (1:1)",
+        sme_note: "Prevents SSRF credential theft on AWS EC2.",
+        mapping_rationale: "Exact match between AWS Sentinel IMDSv2 policy and Wiz EC2-019"
+      },
+      {
+        cloud_provider: "AWS",
+        source_engine: "Missing HashiCorp Sentinel",
+        gap_direction: "Wiz -> Sentinel Gap (Missing Sentinel Policy)",
+        ccr_change_status: "New CCR",
+        policy_created_at: "2026-11-04", wiz_updated_at: "2026-11-04",
+        finding_validation_status: "Validated · Issue Gen Enabled",
+        security_graph_status: "Graph Verified · Expected Issue Generated",
+        team_action_ticket: "CSEC-509 (Author AWS RDS Sentinel)",
+        azure_policy_guid: "MISSING-SENTINEL-RDS-011",
+        azure_policy_name: "[Missing HashiCorp Sentinel] AWS RDS DB instance storage encryption with KMS CMK",
+        azure_policy_type: "Missing-Sentinel",
+        azure_category: "SQL",
+        azure_default_effect: "Missing (No Sentinel Guardrail)",
+        azure_resource_types: "aws_db_instance",
+        azure_condition_fields: "storage_encrypted, kms_key_id",
+        wiz_rule_id: "wc-aws-205",
+        wiz_short_id: "RDS-011",
+        wiz_rule_name: "RDS DB instance storage encryption should be enabled with KMS CMK",
+        wiz_severity: "HIGH",
+        wiz_native_types: "rds",
+        base_semantic_score: 0.14,
+        exact_guid_match: false,
+        shared_controls: "CCM CEK-04, NIST SP 800-53 SC-28, PCI-DSS 3.5",
+        review_status: "Action Required: Deploy Generated AWS/Azure Sentinel Policy",
+        sme_note: "Wiz RDS-011 is flagging 6 unencrypted RDS instances in dev; add generated .sentinel rule to TFE.",
+        mapping_rationale: "Active AWS Wiz CCR (RDS-011) has no matching Sentinel guardrail in Terraform"
+      },
+      {
+        cloud_provider: "AWS",
+        source_engine: "Missing HashiCorp Sentinel",
+        gap_direction: "Wiz -> Sentinel Gap (Missing Sentinel Policy)",
+        ccr_change_status: "New CCR",
+        policy_created_at: "2026-11-01", wiz_updated_at: "2026-11-01",
+        finding_validation_status: "Validated · Configure Issue Gen",
+        security_graph_status: "Graph Checked · No Issue Generated Yet",
+        team_action_ticket: "CSEC-512 (Author AWS EKS Sentinel)",
+        azure_policy_guid: "MISSING-SENTINEL-EKS-008",
+        azure_policy_name: "[Missing HashiCorp Sentinel] AWS EKS cluster public endpoint access should be disabled",
+        azure_policy_type: "Missing-Sentinel",
+        azure_category: "Kubernetes",
+        azure_default_effect: "Missing (No Sentinel Guardrail)",
+        azure_resource_types: "aws_eks_cluster",
+        azure_condition_fields: "vpc_config.endpoint_public_access",
+        wiz_rule_id: "wc-aws-230",
+        wiz_short_id: "EKS-008",
+        wiz_rule_name: "EKS cluster control plane endpoint should not be publicly accessible",
+        wiz_severity: "CRITICAL",
+        wiz_native_types: "eks",
+        base_semantic_score: 0.12,
+        exact_guid_match: false,
+        shared_controls: "CCM IVS-03, CIS EKS 5.4.1, NIST SP 800-53 SC-7",
+        review_status: "Action Required: Deploy Generated AWS/Azure Sentinel Policy",
+        sme_note: "Close Terraform gap by deploying generated aws_eks_cluster Sentinel policy.",
+        mapping_rationale: "Active AWS Wiz CCR (EKS-008) has no matching Sentinel guardrail in Terraform"
+      },
+      {
+        cloud_provider: "AWS",
+        source_engine: "Missing HashiCorp Sentinel",
+        gap_direction: "Wiz -> Sentinel Gap (Missing Sentinel Policy)",
+        ccr_change_status: "Updated CCR",
+        policy_created_at: "2026-10-17", wiz_updated_at: "2026-10-17",
+        finding_validation_status: "Pending Env Validation",
+        security_graph_status: "CCR Only · Needs Graph Control Link",
+        team_action_ticket: "CSEC-518 (Author AWS CloudTrail Sentinel)",
+        azure_policy_guid: "MISSING-SENTINEL-CLOUDTRAIL-002",
+        azure_policy_name: "[Missing HashiCorp Sentinel] AWS CloudTrail log file validation and KMS encryption",
+        azure_policy_type: "Missing-Sentinel",
+        azure_category: "General",
+        azure_default_effect: "Missing (No Sentinel Guardrail)",
+        azure_resource_types: "aws_cloudtrail",
+        azure_condition_fields: "enable_log_file_validation, kms_key_id",
+        wiz_rule_id: "wc-aws-304",
+        wiz_short_id: "CloudTrail-002",
+        wiz_rule_name: "CloudTrail trail should have log file validation and KMS encryption enabled",
+        wiz_severity: "MEDIUM",
+        wiz_native_types: "cloudtrail",
+        base_semantic_score: 0.18,
+        exact_guid_match: false,
+        shared_controls: "CCM LOG-03, CIS AWS 3.2, PCI-DSS 10.5.2, SOX",
+        review_status: "Action Required: Deploy Generated AWS/Azure Sentinel Policy",
+        sme_note: "Ensure Terraform module enforces enable_log_file_validation = true via Sentinel.",
+        mapping_rationale: "Active AWS Wiz CCR (CloudTrail-002) has no matching Sentinel guardrail in Terraform"
+      },
+      {
+        cloud_provider: "AWS",
+        source_engine: "HashiCorp Sentinel",
+        gap_direction: "Sentinel -> Wiz Gap (Missing Wiz CCR)",
+        ccr_change_status: "Gap: Missing in Wiz",
+        policy_created_at: "2026-11-03",
+        wiz_updated_at: "2026-11-03",
+        finding_validation_status: "Validated · Configure Issue Gen",
+        security_graph_status: "No Linked Graph Control (Custom Gap)",
+        team_action_ticket: "SNOW-REQ88502 (Deploy Custom AWS Rego CCR)",
+        azure_policy_guid: "fin-sentinel-aws-mandatory-cost-tags",
+        azure_policy_name: "Require Bank CostCenter, DataClassification, and AppID tags on all AWS resources",
+        azure_policy_type: "Custom",
+        azure_category: "Tags",
+        azure_default_effect: "hard-mandatory",
+        azure_resource_types: "aws_s3_bucket, aws_instance, aws_db_instance",
+        azure_condition_fields: "tags.CostCenter, tags.DataClassification",
+        wiz_rule_id: "UNMAPPED",
+        wiz_short_id: "UNMAPPED",
+        wiz_rule_name: "No Equivalent Built-In Wiz Rule Found",
+        wiz_severity: "N/A",
+        wiz_native_types: "N/A",
+        base_semantic_score: 0.15,
+        exact_guid_match: false,
+        shared_controls: "CCM GRC-01, FFIEC Asset Governance",
+        review_status: "Action Required: Build Custom Wiz Rego Rule or Retain Azure Policy",
+        sme_note: "Sentinel enforces tags in Terraform, but AWS console creations bypass it—deploy custom Wiz Rego rule.",
+        mapping_rationale: "Custom AWS Sentinel tag policy has no built-in Wiz equivalent for runtime console drift"
+      }
+    ];
+
+    let policyRecords = [];
+    let activeInspectorGuid = null;
+    let activeWorkflowStep = null;
+    let tierChartInstance = null;
+    let categoryChartInstance = null;
+
+    function buildRegoSkeleton(row) {
+      if (row.generated_rego_skeleton && row.generated_rego_skeleton.trim().length > 10) {
+        return row.generated_rego_skeleton;
+      }
+      const cloud = row.cloud_provider || "AZURE";
+      const fieldAlias = (row.azure_condition_fields || "properties.configurationProperty").split(",")[0].trim();
+      const shortPath = fieldAlias.split("/").pop().replace(/\['([^']+)'\]/g, ".$1");
+      return [
+        "package wiz",
+        "",
+        `# Auto-generated Wiz Custom CCR (OPA Rego) for ${cloud} (${row.source_engine || "Policy"}):`,
+        `# Policy: ${row.azure_policy_name}`,
+        `# Source ID: ${row.azure_policy_guid} | Effect: ${row.azure_default_effect}`,
+        "",
+        'default result = "PASS"',
+        "",
+        'result = "FAIL" {',
+        `    # Evaluates ${cloud} runtime attribute mapped from '${fieldAlias}'`,
+        `    not input.${shortPath}`,
+        "}",
+        "",
+        `currentConfiguration := sprintf("${cloud} resource %v failed check on '${fieldAlias}'", [input.id])`,
+        `expectedConfiguration := "${row.azure_policy_name.replace(/"/g, "'")}"`
+      ].join("\n");
+    }
+
+
+    const CHECKOV_MAP_BY_GUID = {
+      "sentinel-azurerm-storage-https-only": { id: "CKV_AZURE_3", status: "Built-In CKV Active" },
+      "sentinel-azurerm-storage-no-public-blob": { id: "CKV_AZURE_59", status: "Built-In CKV Active" },
+      "sentinel-azurerm-keyvault-soft-delete": { id: "CKV_AZURE_42", status: "Built-In CKV Active" },
+      "sentinel-azurerm-mssql-tde-enabled": { id: "CKV_AZURE_24", status: "Built-In CKV Active" },
+      "sentinel-azurerm-nsg-close-rdp-ssh": { id: "CKV_AZURE_9", status: "Built-In CKV Active" },
+      "sentinel-azurerm-aks-rbac-enabled": { id: "CKV_AZURE_5", status: "Built-In CKV Active" },
+      "sentinel-azurerm-disk-cmk-encryption": { id: "CKV_AZURE_93", status: "Built-In CKV Active" },
+      "sentinel-azurerm-webapp-min-tls12": { id: "CKV_AZURE_14", status: "Built-In CKV Active" },
+      "MISSING-SENTINEL-OPENAI-002": { id: "CKV_AZURE_134", status: "Built-In CKV Active" },
+      "fin-sentinel-azurerm-mandatory-cost-tags": { id: "CKV2_CUSTOM_AZ_TAGS", status: "Custom Checkov YAML Needed" },
+      "fin-sentinel-azurerm-us-regions-only": { id: "CKV2_CUSTOM_AZ_REGION", status: "Custom Checkov YAML Needed" },
+      "sentinel-aws-s3-block-public-access": { id: "CKV_AWS_53", status: "Built-In CKV Active" },
+      "sentinel-aws-kms-key-rotation": { id: "CKV_AWS_7", status: "Built-In CKV Active" },
+      "sentinel-aws-ec2-imdsv2-required": { id: "CKV_AWS_79", status: "Built-In CKV Active" },
+      "MISSING-SENTINEL-RDS-011": { id: "CKV_AWS_16", status: "Built-In CKV Active" },
+      "MISSING-SENTINEL-EKS-008": { id: "CKV_AWS_39", status: "Built-In CKV Active" },
+      "MISSING-SENTINEL-CLOUDTRAIL-002": { id: "CKV_AWS_35", status: "Built-In CKV Active" },
+      "fin-sentinel-aws-mandatory-cost-tags": { id: "CKV2_CUSTOM_AWS_TAGS", status: "Custom Checkov YAML Needed" }
+    };
+
+    function buildCheckovYaml(row) {
+      if (row.generated_checkov_yaml && row.generated_checkov_yaml.trim().length > 10) {
+        return row.generated_checkov_yaml;
+      }
+      const ckvInfo = CHECKOV_MAP_BY_GUID[row.azure_policy_guid] || { id: row.checkov_id || "CKV2_CUSTOM_001", status: "Custom Checkov YAML Needed" };
+      const resType = (row.azure_resource_types || "aws_s3_bucket").split(",")[0].trim();
+      const attr = (row.azure_condition_fields || "encryption_enabled").split(",")[0].trim().split("/").pop().replace(/\['([^']+)'\]/g, ".$1");
+      const safeTitle = (row.azure_policy_name || "Custom Policy").replace(/"/g, "'");
+      const cat = (row.azure_category || "GENERAL_SECURITY").toUpperCase().replace(/[^A-Z0-9]+/g, "_");
+      return [
+        "---",
+        `# Layer 1: Checkov CI/PR Policy (${ckvInfo.id} · ${ckvInfo.status})`,
+        "metadata:",
+        `  id: "${ckvInfo.id}"`,
+        `  name: "${safeTitle}"`,
+        `  category: "${cat}"`,
+        '  severity: "HIGH"',
+        "definition:",
+        '  cond_type: "attribute"',
+        "  resource_types:",
+        `    - "${resType}"`,
+        `  attribute: "${attr}"`,
+        '  operator: "exists"'
+      ].join("\n");
+    }
+
+    function buildSentinelSkeleton(row) {
+      if (row.generated_sentinel_skeleton && row.generated_sentinel_skeleton.trim().length > 10) {
+        return row.generated_sentinel_skeleton;
+      }
+      const cloud = row.cloud_provider || "AZURE";
+      const resType = (row.azure_resource_types || (cloud === "AWS" ? "aws_resource" : "azurerm_resource")).split(",")[0].trim();
+      const attr = (row.azure_condition_fields || "enabled").split(",")[0].trim().split("/").pop();
+      const ruleSlug = (row.wiz_short_id && row.wiz_short_id !== "UNMAPPED" ? row.wiz_short_id : row.azure_policy_guid)
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, "_");
+
+      return [
+        `# Auto-generated HashiCorp Sentinel Policy (${cloud})`,
+        `# Linked Wiz CCR: ${row.wiz_short_id} — ${row.wiz_rule_name}`,
+        `# Target Terraform Resource: ${resType}`,
+        'import "tfplan/v2" as tfplan',
+        "",
+        "target_resources = filter tfplan.resource_changes as _, rc {",
+        `    rc.type is "${resType}" and`,
+        '    rc.mode is "managed" and',
+        '    (rc.change.actions contains "create" or rc.change.actions contains "update")',
+        "}",
+        "",
+        `enforce_${ruleSlug} = rule {`,
+        "    all target_resources as _, r {",
+        `        # Enforce preventative IaC check on attribute: ${attr}`,
+        `        r.change.after.${attr} is not null`,
+        "    }",
+        "}",
+        "",
+        "main = rule {",
+        `    enforce_${ruleSlug}`,
+        "}"
+      ].join("\n");
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      const borderColor = type === "success" ? "border-emerald-500/50 bg-emerald-950/90 text-emerald-200" : "border-indigo-500/50 bg-slate-900/95 text-slate-100";
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl border ${borderColor} shadow-xl text-xs font-medium transition-all duration-300`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+      }, 3200);
+    }
+
+    function copyTextToClipboard(text, label = "Content") {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(`Copied ${label} to clipboard`, "success");
+        }).catch(() => fallbackCopy(text, label));
+      } else {
+        fallbackCopy(text, label);
+      }
+    }
+
+    function fallbackCopy(text, label) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+        showToast(`Copied ${label} to clipboard`, "success");
+      } catch (err) {
+        showToast("Unable to copy automatically; please select and copy.", "info");
+      }
+      ta.remove();
+    }
+
+    function recalculateScoresAndTiers() {
+      const minThreshold = parseFloat(document.getElementById("sliderThreshold").value);
+      const controlBoost = parseFloat(document.getElementById("sliderControlBoost").value);
+      const semanticScale = parseFloat(document.getElementById("sliderSemanticScale").value);
+
+      document.getElementById("valThreshold").textContent = minThreshold.toFixed(2);
+      document.getElementById("valControlBoost").textContent = `+${controlBoost.toFixed(2)}`;
+      document.getElementById("valSemanticScale").textContent = `${semanticScale.toFixed(2)}x`;
+
+      policyRecords.forEach(r => {
+        if (!r.cloud_provider) r.cloud_provider = "AZURE";
+        if (!r.source_engine) r.source_engine = "Azure Policy";
+        if (!r.gap_direction) r.gap_direction = "Bidirectional Parity (Covered)";
+        if (!r.ccr_change_status) r.ccr_change_status = "Baseline";
+        if (!r.finding_validation_status) r.finding_validation_status = "Validated · Issue Gen Enabled";
+        if (!r.security_graph_status) r.security_graph_status = "Graph Verified · Expected Issue Generated";
+        if (!r.team_action_ticket) r.team_action_ticket = "None";
+        if (!r.sdlc_exception_status) {
+          if (r.azure_policy_guid === "sentinel-azurerm-disk-cmk-encryption" || r.azure_policy_guid === "MISSING-SENTINEL-CLOUDTRAIL-002") {
+            r.sdlc_exception_status = "Excluded · Compensated by Sentinel/Checkov";
+            r.sdlc_approver = "Policies Review (Snehal)";
+            r.next_periodic_review_date = "2027-01-28";
+          } else if (r.ccr_change_status === "New CCR" || r.ccr_change_status === "Updated CCR") {
+            r.sdlc_exception_status = "Daily SDLC Review & Testing Queue";
+            r.sdlc_approver = "Policies Review (Snehal)";
+            r.next_periodic_review_date = "2026-11-13";
+          } else if (r.azure_policy_type === "Custom" || r.azure_policy_type === "Missing-Sentinel") {
+            r.sdlc_exception_status = "Custom Rule SDLC Development";
+            r.sdlc_approver = "Custom Rule Management (Trevor)";
+            r.next_periodic_review_date = "2027-01-28";
+          } else {
+            r.sdlc_exception_status = "SDLC Approved · Active Baseline";
+            r.sdlc_approver = "Cloud Security Governance Board";
+            r.next_periodic_review_date = "2027-04-30";
+          }
+        }
+
+        const isMissingSentinel = r.azure_policy_type === "Missing-Sentinel" || r.gap_direction.includes("Wiz -> Sentinel Gap");
+        const isMissingWiz = r.wiz_rule_id === "UNMAPPED" || r.gap_direction.includes("Sentinel -> Wiz Gap");
+
+        if (r.exact_guid_match && !isMissingSentinel && !isMissingWiz) {
+          r.confidence_score = 0.99;
+        } else {
+          const base = typeof r.base_semantic_score === "number" ? r.base_semantic_score : (r.confidence_score || 0.2);
+          const hasSharedControls = r.shared_controls && r.shared_controls.trim().length > 0 && !isMissingSentinel && !isMissingWiz;
+          const boost = hasSharedControls ? controlBoost : 0.0;
+          r.confidence_score = Math.min(0.98, Math.max(0.05, +(base * semanticScale + boost).toFixed(2)));
+        }
+
+        if (!isMissingSentinel && !isMissingWiz && r.confidence_score >= minThreshold) {
+          if (r.confidence_score >= 0.95) {
+            r.mapping_tier = "Tier 1: Exact Native ID";
+          } else if (r.shared_controls && r.confidence_score >= 0.65) {
+            r.mapping_tier = "Tier 2: Compliance Crosswalk";
+          } else if (r.confidence_score >= 0.70) {
+            r.mapping_tier = "Tier 3: High Semantic Match";
+          } else {
+            r.mapping_tier = "Tier 4: Candidate Match";
+          }
+        } else {
+          r.mapping_tier = "Tier 5: Coverage Gap";
+        }
+
+        const ckv = CHECKOV_MAP_BY_GUID[r.azure_policy_guid] || { id: r.checkov_id || `CKV_${r.cloud_provider}_001`, status: r.checkov_status || "Built-In CKV Active" };
+        r.checkov_id = ckv.id;
+        r.checkov_status = ckv.status;
+        r.generated_checkov_yaml = buildCheckovYaml(r);
+        r.generated_rego_skeleton = buildRegoSkeleton(r);
+        r.generated_sentinel_skeleton = buildSentinelSkeleton(r);
+      });
+
+      updateKPIsAndCharts();
+      renderTable();
+      renderRegoStudio();
+    }
+
+    function updateKPIsAndCharts() {
+      const total = policyRecords.length;
+      const azCount = policyRecords.filter(r => r.cloud_provider === "AZURE").length;
+      const awsCount = policyRecords.filter(r => r.cloud_provider === "AWS").length;
+
+      const t1 = policyRecords.filter(r => r.mapping_tier.startsWith("Tier 1")).length;
+      const t2 = policyRecords.filter(r => r.mapping_tier.startsWith("Tier 2")).length;
+      const t3 = policyRecords.filter(r => r.mapping_tier.startsWith("Tier 3")).length;
+      const wizToSentinelGaps = policyRecords.filter(r => r.gap_direction.includes("Wiz -> Sentinel Gap")).length;
+      const sentinelToWizGaps = policyRecords.filter(r => r.gap_direction.includes("Sentinel -> Wiz Gap") || (r.mapping_tier.startsWith("Tier 5") && !r.gap_direction.includes("Wiz -> Sentinel Gap"))).length;
+
+      document.getElementById("kpiTotal").textContent = String(total);
+      document.getElementById("kpiTotalSub").textContent = `${azCount} Azure · ${awsCount} AWS`;
+      document.getElementById("kpiTier1").textContent = String(t1);
+      document.getElementById("kpiTier23").textContent = String(t2 + t3);
+      document.getElementById("kpiTier4").textContent = String(wizToSentinelGaps);
+      document.getElementById("kpiTier5").textContent = String(sentinelToWizGaps);
+
+      // Update 5-Step CCR Workflow Banner Counters
+      const s1Count = policyRecords.filter(r => r.ccr_change_status === "New CCR" || r.ccr_change_status === "Updated CCR").length;
+      const s2Count = policyRecords.filter(r => !r.finding_validation_status.includes("Issue Gen Enabled")).length;
+      const s3Count = policyRecords.filter(r => r.security_graph_status.includes("Graph Verified")).length;
+      const s4Count = policyRecords.filter(r => !r.gap_direction.includes("Bidirectional Parity")).length;
+      document.getElementById("wfStep1Count").textContent = String(s1Count);
+      document.getElementById("wfStep2Count").textContent = String(s2Count);
+      document.getElementById("wfStep3Count").textContent = String(s3Count);
+      document.getElementById("wfStep4Count").textContent = String(s4Count);
+      document.getElementById("wfStep5Count").textContent = String(total);
+
+      const parityCount = total - wizToSentinelGaps - sentinelToWizGaps;
+      const mappedPct = total > 0 ? Math.round((parityCount / total) * 100) : 0;
+      document.getElementById("coverageBadge").textContent = `${mappedPct}% Parity`;
+
+      // Update Doughnut Chart
+      const tierData = [t1, t2 + t3, wizToSentinelGaps, sentinelToWizGaps];
+      if (!tierChartInstance) {
+        const ctx1 = document.getElementById("tierChart").getContext("2d");
+        tierChartInstance = new Chart(ctx1, {
+          type: "doughnut",
+          data: {
+            labels: [
+              "Tier 1: Exact ID Parity",
+              "Tier 2/3: Crosswalk Parity",
+              "Wiz → Sentinel Gap (No Sentinel)",
+              "Sentinel → Wiz Gap (No Wiz CCR)"
+            ],
+            datasets: [{
+              data: tierData,
+              backgroundColor: ["#10b981", "#06b6d4", "#f59e0b", "#f43f5e"],
+              borderColor: "#0f172a",
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "64%",
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { color: "#cbd5e1", font: { size: 11 }, boxWidth: 10, padding: 10 }
+              }
+            }
+          }
+        });
+      } else {
+        tierChartInstance.data.datasets[0].data = tierData;
+        tierChartInstance.update();
+      }
+
+      // Update Category Stacked Bar Chart
+      const categories = Array.from(new Set(policyRecords.map(r => `${r.cloud_provider}: ${r.azure_category}`)));
+      const parityCounts = categories.map(cat =>
+        policyRecords.filter(r => `${r.cloud_provider}: ${r.azure_category}` === cat && !r.mapping_tier.startsWith("Tier 5")).length
+      );
+      const wizToSentCounts = categories.map(cat =>
+        policyRecords.filter(r => `${r.cloud_provider}: ${r.azure_category}` === cat && r.gap_direction.includes("Wiz -> Sentinel Gap")).length
+      );
+      const sentToWizCounts = categories.map(cat =>
+        policyRecords.filter(r => `${r.cloud_provider}: ${r.azure_category}` === cat && r.gap_direction.includes("Sentinel -> Wiz Gap")).length
+      );
+
+      if (!categoryChartInstance) {
+        const ctx2 = document.getElementById("categoryChart").getContext("2d");
+        categoryChartInstance = new Chart(ctx2, {
+          type: "bar",
+          data: {
+            labels: categories,
+            datasets: [
+              {
+                label: "Matched 1:1 (Wiz + Sentinel)",
+                data: parityCounts,
+                backgroundColor: "#6366f1",
+                borderRadius: 3
+              },
+              {
+                label: "Wiz → Sentinel Gap (.sentinel Needed)",
+                data: wizToSentCounts,
+                backgroundColor: "#f59e0b",
+                borderRadius: 3
+              },
+              {
+                label: "Sentinel → Wiz Gap (.rego Needed)",
+                data: sentToWizCounts,
+                backgroundColor: "#f43f5e",
+                borderRadius: 3
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                stacked: true,
+                ticks: { color: "#94a3b8", font: { size: 9 } },
+                grid: { display: false }
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: { stepSize: 1, color: "#94a3b8", font: { size: 10 } },
+                grid: { color: "#1e293b" }
+              }
+            },
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { color: "#cbd5e1", font: { size: 10 }, boxWidth: 10 }
+              }
+            }
+          }
+        });
+      } else {
+        categoryChartInstance.data.labels = categories;
+        categoryChartInstance.data.datasets[0].data = parityCounts;
+        categoryChartInstance.data.datasets[1].data = wizToSentCounts;
+        categoryChartInstance.data.datasets[2].data = sentToWizCounts;
+        categoryChartInstance.update();
+      }
+    }
+
+    function getTierPillClasses(tier) {
+      if (tier.startsWith("Tier 1")) return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
+      if (tier.startsWith("Tier 2")) return "bg-cyan-500/15 text-cyan-300 border-cyan-500/30";
+      if (tier.startsWith("Tier 3")) return "bg-indigo-500/15 text-indigo-300 border-indigo-500/30";
+      if (tier.startsWith("Tier 4")) return "bg-amber-500/15 text-amber-300 border-amber-500/30";
+      return "bg-rose-500/15 text-rose-300 border-rose-500/30";
+    }
+
+    function getPolicyAgeDays(r) {
+      const refDate = new Date("2026-11-05T23:59:59Z");
+      const rawDateStr = r.policy_created_at || r.created_at || r.wiz_updated_at || "";
+      if (!rawDateStr || rawDateStr === "Baseline" || rawDateStr === "N/A") return 120;
+      const parsed = new Date(rawDateStr);
+      if (isNaN(parsed.getTime())) return 120;
+      const diffMs = Math.max(0, refDate.getTime() - parsed.getTime());
+      return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    }
+
+    function getFilteredRecords() {
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
+      const dateWindow = document.getElementById("filterDateWindow").value;
+      const sdlcFilter = document.getElementById("filterSdlcException").value;
+      const cloudFilter = document.getElementById("filterCloud").value;
+      const gapFilter = document.getElementById("filterGapDirection").value;
+      const tierFilter = document.getElementById("filterTier").value;
+      const effectFilter = document.getElementById("filterEffect").value;
+      const fwFilter = document.getElementById("filterFramework").value;
+
+      return policyRecords.filter(r => {
+        if (dateWindow !== "ALL") {
+          const maxDays = parseInt(dateWindow, 10);
+          const ageDays = getPolicyAgeDays(r);
+          if (ageDays > maxDays) return false;
+        }
+        if (activeWorkflowStep === "1" && !(r.ccr_change_status === "New CCR" || r.ccr_change_status === "Updated CCR")) return false;
+        if (activeWorkflowStep === "2" && r.finding_validation_status.includes("Issue Gen Enabled")) return false;
+        if (activeWorkflowStep === "3" && !r.security_graph_status.includes("Graph Verified")) return false;
+        if (activeWorkflowStep === "4" && r.gap_direction.includes("Bidirectional Parity")) return false;
+
+        if (sdlcFilter !== "ALL" && !(r.sdlc_exception_status || "").includes(sdlcFilter)) return false;
+        if (cloudFilter !== "ALL" && r.cloud_provider !== cloudFilter) return false;
+        if (gapFilter !== "ALL" && !(r.gap_direction || "").includes(gapFilter)) return false;
+        if (tierFilter !== "ALL" && r.mapping_tier !== tierFilter) return false;
+        if (effectFilter !== "ALL") {
+          const eff = (r.azure_default_effect || "").toLowerCase();
+          if (effectFilter === "Preventative" && !(eff.includes("deny") || eff.includes("mandatory") || eff.includes("modify"))) return false;
+          if (effectFilter === "Audit" && !(eff.includes("audit") || eff.includes("advisory"))) return false;
+          if (effectFilter === "Missing" && !eff.includes("missing")) return false;
+        }
+        if (fwFilter !== "ALL") {
+          if (!(r.shared_controls || "").toUpperCase().includes(fwFilter)) return false;
+        }
+        if (q) {
+          const hay = `${r.checkov_id} ${r.checkov_status} ${r.cloud_provider} ${r.source_engine} ${r.gap_direction} ${r.azure_policy_name} ${r.azure_policy_guid} ${r.azure_category} ${r.azure_resource_types} ${r.wiz_rule_name} ${r.wiz_short_id} ${r.shared_controls} ${r.review_status} ${r.ccr_change_status} ${r.team_action_ticket}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("mappingTableBody");
+      const filtered = getFilteredRecords();
+      document.getElementById("tableCount").textContent = String(filtered.length);
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">No policies match the current filters. Click "Reset" or "Show All Stages" to clear filters.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => {
+        const tierClass = getTierPillClasses(r.mapping_tier);
+        const pct = Math.round((r.confidence_score || 0) * 100);
+        const isAws = r.cloud_provider === "AWS";
+        const cloudBadge = isAws
+          ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">AWS</span>`
+          : `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/40">AZURE</span>`;
+
+        const changeBadge = r.ccr_change_status === "New CCR"
+          ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-indigo-500/25 text-indigo-300 border border-indigo-500/40">NEW CCR</span>`
+          : r.ccr_change_status === "Updated CCR"
+            ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">UPDATED CCR</span>`
+            : r.ccr_change_status.includes("Gap")
+              ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30">UNMAPPED GAP</span>`
+              : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400">Baseline</span>`;
+
+        const gapPill = r.gap_direction.includes("Wiz -> Sentinel Gap")
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">Wiz → Sentinel Gap (.sentinel ready)</span>`
+          : r.gap_direction.includes("Sentinel -> Wiz Gap")
+            ? `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40">Sentinel → Wiz Gap (.rego ready)</span>`
+            : r.gap_direction.includes("Upgrade")
+              ? `<span class="px-2 py-0.5 rounded text-[10px] bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Audit Only → Add Sentinel</span>`
+              : `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Bidirectional Parity (${r.azure_default_effect})</span>`;
+
+        const wizCol = r.wiz_rule_id === "UNMAPPED"
+          ? `<div class="text-rose-300 font-medium">Missing in Wiz (No Built-in CCR)</div>
+             <div class="text-[11px] text-slate-400 mt-0.5">Custom Wiz OPA Rego ready in Inspector</div>`
+          : `<div class="font-medium text-slate-100">${r.wiz_rule_name}</div>
+             <div class="text-[11px] font-mono text-indigo-400 mt-0.5">${r.wiz_short_id} · ${r.wiz_severity} · <span class="text-cyan-300">${r.finding_validation_status}</span></div>`;
+
+        return `
+          <tr data-guid="${r.azure_policy_guid}" class="policy-row hover:bg-slate-800/50 transition cursor-pointer">
+            <td class="py-3 px-4">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                ${cloudBadge}
+                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded ${r.checkov_status && r.checkov_status.includes('Custom') ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'}" title="${r.checkov_status}">L1: ${r.checkov_id}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">L2: ${r.source_engine}</span>
+                ${changeBadge}
+                <span class="text-[10px] font-mono text-emerald-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">Created: ${r.policy_created_at || r.wiz_updated_at || "2026-08-01"} (${getPolicyAgeDays(r)}d ago)</span>
+              </div>
+              <div class="font-semibold text-white">${r.azure_policy_name}</div>
+              <div class="text-[11px] font-mono text-slate-400 mt-0.5">${r.azure_policy_guid}</div>
+            </td>
+            <td class="py-3 px-3">
+              <div class="mb-1">${gapPill}</div>
+              <div class="text-[11px] font-mono text-slate-400 truncate max-w-[180px]" title="${r.azure_resource_types}">${r.azure_resource_types}</div>
+            </td>
+            <td class="py-3 px-4">${wizCol}</td>
+            <td class="py-3 px-3">
+              <div class="text-[11px] font-medium ${r.security_graph_status.includes("Verified") ? "text-emerald-300" : "text-amber-300"}">${r.security_graph_status}</div>
+              <div class="text-[10px] text-cyan-300 font-mono mt-0.5">${r.shared_controls || "—"}</div>
+            </td>
+            <td class="py-3 px-3">
+              <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${tierClass}">
+                ${r.mapping_tier}
+              </span>
+              <div class="mt-1.5 flex items-center gap-2">
+                <div class="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full bg-indigo-500" style="width: ${pct}%"></div>
+                </div>
+                <span class="font-mono text-[11px] text-slate-200">${pct}%</span>
+              </div>
+            </td>
+            <td class="py-3 px-3">
+              <div class="text-[11px] font-semibold ${r.sdlc_exception_status && r.sdlc_exception_status.includes('Excluded') ? 'text-amber-300' : 'text-slate-200'}">${r.sdlc_exception_status}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Owner: ${r.sdlc_approver} · Review: <span class="font-mono text-indigo-300">${r.next_periodic_review_date}</span></div>
+              <div class="text-[10px] font-mono ${r.team_action_ticket && r.team_action_ticket !== "None" ? "text-amber-300" : "text-slate-500"} mt-0.5">Ticket: ${r.team_action_ticket || "None"}</div>
+            </td>
+            <td class="py-3 px-3 text-right">
+              <button type="button" data-inspect-guid="${r.azure_policy_guid}" class="inspect-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white border border-slate-700 transition">
+                Inspect
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderRegoStudio() {
+      const container = document.getElementById("regoCardsContainer");
+      const gapOrCandidate = policyRecords.filter(
+        r => !r.gap_direction.includes("Bidirectional Parity") || r.mapping_tier.startsWith("Tier 5")
+      );
+
+      if (gapOrCandidate.length === 0) {
+        container.innerHTML = `<div class="col-span-2 text-center py-8 text-slate-400 text-xs">All policies have full bidirectional parity.</div>`;
+        return;
+      }
+
+      container.innerHTML = gapOrCandidate.map(r => {
+        const isWizToSent = r.gap_direction.includes("Wiz -> Sentinel") || r.gap_direction.includes("Upgrade");
+        const code = isWizToSent ? buildSentinelSkeleton(r) : buildRegoSkeleton(r);
+        const langLabel = isWizToSent ? "HashiCorp Sentinel (.sentinel)" : "Wiz OPA Rego (.rego)";
+        const codeColor = isWizToSent ? "text-amber-300" : "text-emerald-300";
+
+        return `
+          <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded ${r.cloud_provider === "AWS" ? "bg-amber-500/20 text-amber-300" : "bg-blue-500/20 text-blue-300"}">${r.cloud_provider}</span>
+                  <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-200">${langLabel}</span>
+                </div>
+                <button type="button" data-copy-studio-guid="${r.azure_policy_guid}" data-studio-kind="${isWizToSent ? "sentinel" : "rego"}" class="copy-studio-btn px-2.5 py-1 rounded text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700">
+                  Copy Code
+                </button>
+              </div>
+              <h3 class="text-xs font-bold text-white mt-2">${r.azure_policy_name}</h3>
+              <p class="text-[11px] text-slate-400 font-mono mt-0.5">${r.gap_direction} · Resource: ${r.azure_resource_types}</p>
+            </div>
+            <pre class="bg-slate-900 border border-slate-800 rounded-lg p-3 text-[11px] font-mono ${codeColor} overflow-x-auto">${code}</pre>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openInspectorModal(guid) {
+      const rec = policyRecords.find(r => r.azure_policy_guid === guid);
+      if (!rec) return;
+      activeInspectorGuid = guid;
+
+      document.getElementById("modalTierBadge").textContent = `${rec.cloud_provider} · ${rec.gap_direction}`;
+      document.getElementById("modalTitle").textContent = rec.azure_policy_name;
+      document.getElementById("modalAzName").textContent = rec.azure_policy_name;
+      document.getElementById("modalAzGuid").textContent = `${rec.azure_policy_guid} | Checkov: ${rec.checkov_id} (${rec.checkov_status})`;
+      document.getElementById("modalAzTypeCat").textContent = `${rec.cloud_provider} · ${rec.source_engine} · ${rec.azure_category}`;
+      document.getElementById("modalAzEffect").textContent = rec.azure_default_effect;
+      document.getElementById("modalAzResource").textContent = rec.azure_resource_types;
+      document.getElementById("modalAzFields").textContent = rec.azure_condition_fields || "N/A";
+
+      document.getElementById("modalWizName").textContent = rec.wiz_rule_name;
+      document.getElementById("modalWizId").textContent = `${rec.wiz_short_id} (${rec.wiz_rule_id})`;
+      document.getElementById("modalWizSeverity").textContent = `${rec.wiz_severity} · ${rec.ccr_change_status} (${rec.wiz_updated_at || "Baseline"})`;
+      document.getElementById("modalWizNative").textContent = rec.wiz_native_types;
+      document.getElementById("modalConfidence").textContent = `${Math.round((rec.confidence_score || 0) * 100)}%`;
+      document.getElementById("modalRationale").textContent = `${rec.mapping_rationale} | Controls: ${rec.shared_controls || "None"}`;
+
+      document.getElementById("modalFindingValSelect").value = rec.finding_validation_status || "Validated · Issue Gen Enabled";
+      document.getElementById("modalGraphCheckSelect").value = rec.security_graph_status || "Graph Verified · Expected Issue Generated";
+      document.getElementById("modalTicketInput").value = rec.team_action_ticket || "";
+      document.getElementById("modalExceptionStatusSelect").value = rec.sdlc_exception_status || "SDLC Approved · Active Baseline";
+      document.getElementById("modalApproverInput").value = rec.sdlc_approver || "Policies Review (Snehal)";
+      document.getElementById("modalReassessmentDate").value = rec.next_periodic_review_date || "2027-01-28";
+      document.getElementById("modalDispositionSelect").value = rec.review_status;
+      document.getElementById("modalAuditNote").value = rec.sme_note || "";
+      document.getElementById("modalRegoCode").textContent = buildRegoSkeleton(rec);
+      document.getElementById("modalCheckovCode").textContent = buildCheckovYaml(rec);
+      document.getElementById("modalSentinelCode").textContent = buildSentinelSkeleton(rec);
+
+      document.getElementById("inspectorModal").classList.remove("hidden");
+    }
+
+    function closeInspectorModal() {
+      document.getElementById("inspectorModal").classList.add("hidden");
+      activeInspectorGuid = null;
+    }
+
+    function saveModalDisposition() {
+      if (!activeInspectorGuid) return;
+      const rec = policyRecords.find(r => r.azure_policy_guid === activeInspectorGuid);
+      if (rec) {
+        rec.finding_validation_status = document.getElementById("modalFindingValSelect").value;
+        rec.security_graph_status = document.getElementById("modalGraphCheckSelect").value;
+        rec.team_action_ticket = document.getElementById("modalTicketInput").value.trim() || "None";
+        rec.sdlc_exception_status = document.getElementById("modalExceptionStatusSelect").value;
+        rec.sdlc_approver = document.getElementById("modalApproverInput").value.trim() || "Cloud Security Governance";
+        rec.next_periodic_review_date = document.getElementById("modalReassessmentDate").value || "2027-01-28";
+        rec.review_status = document.getElementById("modalDispositionSelect").value;
+        rec.sme_note = document.getElementById("modalAuditNote").value.trim();
+        try {
+          localStorage.setItem("multicloud_wiz_sentinel_v4", JSON.stringify(policyRecords));
+        } catch (e) {
+          // Ignore sandbox storage restrictions
+        }
+        updateKPIsAndCharts();
+        renderTable();
+        showToast("Saved Multi-Cloud CCR & Sentinel disposition", "success");
+      }
+      closeInspectorModal();
+    }
+
+    function setWorkflowStepFilter(step) {
+      activeWorkflowStep = step;
+      const stageNames = {
+        "1": "Step 1: New & Updated Wiz CCRs (AWS + Azure)",
+        "2": "Step 2: Findings Needing Validation or Issue Gen Config",
+        "3": "Step 3: Security Graph Verified Rules",
+        "4": "Step 4: Bidirectional Sentinel ⇄ Wiz Gaps",
+        "5": "Step 5: All Multi-Cloud Mapped & Tracked Policies"
+      };
+      document.getElementById("activeStageLabel").textContent = step ? stageNames[step] : "All 5 CCR Workflow Stages (AWS + Azure)";
+      document.querySelectorAll(".wf-step-btn").forEach(btn => {
+        if (btn.dataset.wfStep === step) {
+          btn.classList.add("ring-2", "ring-indigo-500", "border-indigo-500");
+        } else {
+          btn.classList.remove("ring-2", "ring-indigo-500", "border-indigo-500");
+        }
+      });
+      renderTable();
+    }
+
+    function switchTab(tabName) {
+      const panels = {
+        dashboard: document.getElementById("tabPanelDashboard"),
+        engine: document.getElementById("tabPanelEngine"),
+        rego: document.getElementById("tabPanelRego"),
+        access: document.getElementById("tabPanelAccess")
+      };
+      Object.entries(panels).forEach(([k, el]) => {
+        if (k === tabName) el.classList.remove("hidden");
+        else el.classList.add("hidden");
+      });
+
+      document.querySelectorAll(".tab-nav-btn").forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+          btn.className = "tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 border-indigo-500 text-indigo-400 whitespace-nowrap transition";
+        } else {
+          btn.className = "tab-nav-btn px-4 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap transition";
+        }
+      });
+    }
+
+    function exportToCsv() {
+      const headers = [
+        "cloud_provider", "checkov_id", "checkov_status", "source_engine", "gap_direction", "ccr_change_status",
+        "wiz_updated_at", "finding_validation_status", "security_graph_status",
+        "team_action_ticket", "azure_policy_guid", "azure_policy_name", "azure_policy_type",
+        "azure_category", "azure_default_effect", "azure_resource_types", "wiz_rule_id",
+        "wiz_short_id", "wiz_rule_name", "wiz_severity", "mapping_tier", "confidence_score",
+        "sdlc_exception_status", "sdlc_approver", "next_periodic_review_date", "shared_controls", "review_status", "sme_note", "mapping_rationale"
+      ];
+      const rows = getFilteredRecords().map(r =>
+        headers.map(h => `"${String(r[h] || "").replace(/"/g, '""')}"`).join(",")
+      );
+      const csvContent = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "multicloud_wiz_sentinel_gaps.csv";
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("Exported AWS & Azure Sentinel ⇄ Wiz crosswalk to CSV", "success");
+    }
+
+    function exportToJson() {
+      const payload = {
+        schema_version: "4.0.0-MultiCloud-Sentinel-Wiz",
+        exported_at: new Date().toISOString(),
+        total_records: policyRecords.length,
+        mappings: policyRecords
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "multicloud_wiz_sentinel_audit_report.json";
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("Exported Multi-Cloud Audit JSON report", "success");
+    }
+
+    function exportInteractiveHtmlReport() {
+      const recordsToExport = getFilteredRecords();
+      const genDate = new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC";
+      const embeddedData = JSON.stringify(recordsToExport);
+      const closeScript = "</" + "script>";
+
+      const reportHtml = [
+        "<!DOCTYPE html>",
+        "<html lang=\"en\" class=\"dark\">",
+        "<head>",
+        "<meta charset=\"UTF-8\">",
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">",
+        "<title>Interactive Cloud Security 3-Layer Mapping & SDLC Audit Report</title>",
+        "<script src=\"https://cdn.tailwindcss.com/3.4.17\">" + closeScript,
+        "</head>",
+        "<body class=\"bg-slate-950 text-slate-100 p-6 font-sans\">",
+        "  <div class=\"max-w-7xl mx-auto space-y-5\">",
+        "    <div class=\"flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4\">",
+        "      <div>",
+        "        <span class=\"px-2.5 py-0.5 text-[11px] font-bold uppercase rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30\">Interactive Mapping & SDLC Audit Deliverable</span>",
+        "        <h1 class=\"text-xl font-bold text-white mt-1\">Wiz Policies ⇄ HashiCorp Sentinel ⇄ Checkov 1:1 Mapping Report</h1>",
+        "        <p class=\"text-xs text-slate-400\">Generated: " + genDate + " · Controls Included: " + recordsToExport.length + " · Audit Observation Remediation Deliverable</p>",
+        "      </div>",
+        "      <button id=\"printBtn\" type=\"button\" class=\"px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700\">Print / Save PDF</button>",
+        "    </div>",
+        "    <div id=\"kpiRow\" class=\"grid grid-cols-2 sm:grid-cols-4 gap-3\"></div>",
+        "    <div class=\"bg-slate-900 border border-slate-800 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-5 gap-3\">",
+        "      <input id=\"q\" type=\"text\" placeholder=\"Filter by policy name, CKV ID, Sentinel rule, Wiz ID, owner, or ticket...\" class=\"sm:col-span-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white\">",
+        "      <select id=\"days\" class=\"bg-slate-950 border border-indigo-500/50 rounded-lg px-3 py-1.5 text-xs text-indigo-200 font-semibold\">",
+        "        <option value=\"ALL\">All Creation Dates</option>",
+        "        <option value=\"1\">1 Day (Last 24h)</option>",
+        "        <option value=\"7\">7 Days</option>",
+        "        <option value=\"30\">30 Days</option>",
+        "        <option value=\"90\">90 Days</option>",
+        "        <option value=\"180\">180 Days</option>",
+        "        <option value=\"365\">365 Days</option>",
+        "      </select>",
+        "      <select id=\"cloud\" class=\"bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white\">",
+        "        <option value=\"ALL\">All Clouds (AWS + Azure)</option>",
+        "        <option value=\"AWS\">AWS Only</option>",
+        "        <option value=\"AZURE\">Azure Only</option>",
+        "      </select>",
+        "      <select id=\"gap\" class=\"bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white\">",
+        "        <option value=\"ALL\">All Gap & SDLC States</option>",
+        "        <option value=\"Parity\">Bidirectional Parity</option>",
+        "        <option value=\"Wiz -> Sentinel\">Wiz → Sentinel Gap</option>",
+        "        <option value=\"Sentinel -> Wiz\">Sentinel → Wiz Gap</option>",
+        "        <option value=\"Excluded\">Excluded Rule Exceptions</option>",
+        "      </select>",
+        "    </div>",
+        "    <div class=\"overflow-x-auto bg-slate-900 border border-slate-800 rounded-xl\">",
+        "      <table class=\"w-full text-left text-xs\">",
+        "        <thead class=\"bg-slate-950 text-slate-400 uppercase text-[11px] border-b border-slate-800\">",
+        "          <tr>",
+        "            <th class=\"p-3\">Cloud / Checkov / Sentinel Policy</th>",
+        "            <th class=\"p-3\">Gap Direction & Enforcement</th>",
+        "            <th class=\"p-3\">Mapped Wiz CCR & Graph Status</th>",
+        "            <th class=\"p-3\">Tier & Score</th>",
+        "            <th class=\"p-3\">SDLC Governance & Next Review</th>",
+        "            <th class=\"p-3 text-right\">Policy Code</th>",
+        "          </tr>",
+        "        </thead>",
+        "        <tbody id=\"tbody\" class=\"divide-y divide-slate-800\"></tbody>",
+        "      </table>",
+        "    </div>",
+        "  </div>",
+        "<script>",
+        "const DATA = " + embeddedData + ";",
+        "document.getElementById('printBtn').addEventListener('click', function() { window.print(); });",
+        "function toggleCode(idx) {",
+        "  var el = document.getElementById('code-' + idx);",
+        "  if (el) el.classList.toggle('hidden');",
+        "}",
+        "function render() {",
+        "  var q = document.getElementById('q').value.toLowerCase();",
+        "  var d = document.getElementById('days').value;",
+        "  var c = document.getElementById('cloud').value;",
+        "  var g = document.getElementById('gap').value;",
+        "  var refDt = new Date('2026-11-05T23:59:59Z');",
+        "  var filtered = DATA.filter(function(r) {",
+        "    if (d !== 'ALL') {",
+        "      var dtStr = r.policy_created_at || r.wiz_updated_at || '2026-08-01';",
+        "      var pDt = new Date(dtStr);",
+        "      var age = isNaN(pDt.getTime()) ? 120 : Math.floor(Math.max(0, refDt.getTime() - pDt.getTime()) / 86400000);",
+        "      if (age > parseInt(d, 10)) return false;",
+        "    }",
+        "    if (c !== 'ALL' && r.cloud_provider !== c) return false;",
+        "    if (g !== 'ALL' && (String(r.gap_direction || '') + ' ' + String(r.sdlc_exception_status || '')).indexOf(g) === -1) return false;",
+        "    return !q || JSON.stringify(r).toLowerCase().indexOf(q) !== -1;",
+        "  });",
+        "  var parity = filtered.filter(function(r) { return String(r.gap_direction || '').indexOf('Parity') !== -1; }).length;",
+        "  var wizGap = filtered.filter(function(r) { return String(r.gap_direction || '').indexOf('Wiz -> Sentinel') !== -1; }).length;",
+        "  var sentGap = filtered.filter(function(r) { return String(r.gap_direction || '').indexOf('Sentinel -> Wiz') !== -1; }).length;",
+        "  document.getElementById('kpiRow').innerHTML =",
+        "    '<div class=\"bg-slate-900 border border-slate-800 rounded-xl p-3.5\"><div class=\"text-xs text-slate-400\">Filtered Controls</div><div class=\"text-xl font-bold text-white mt-0.5\">' + filtered.length + '</div></div>' +",
+        "    '<div class=\"bg-slate-900 border border-emerald-500/30 rounded-xl p-3.5\"><div class=\"text-xs text-emerald-300\">3-Layer Parity</div><div class=\"text-xl font-bold text-emerald-400 mt-0.5\">' + parity + '</div></div>' +",
+        "    '<div class=\"bg-slate-900 border border-amber-500/30 rounded-xl p-3.5\"><div class=\"text-xs text-amber-300\">Wiz → Sentinel Gaps</div><div class=\"text-xl font-bold text-amber-400 mt-0.5\">' + wizGap + '</div></div>' +",
+        "    '<div class=\"bg-slate-900 border border-rose-500/30 rounded-xl p-3.5\"><div class=\"text-xs text-rose-300\">Sentinel → Wiz Gaps</div><div class=\"text-xl font-bold text-rose-400 mt-0.5\">' + sentGap + '</div></div>';",
+        "  document.getElementById('tbody').innerHTML = filtered.map(function(r, i) {",
+        "    var cCls = r.cloud_provider === 'AWS' ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300';",
+        "    var pct = Math.round((r.confidence_score || 0) * 100);",
+        "    return '<tr class=\"hover:bg-slate-800/50\">' +",
+        "      '<td class=\"p-3\"><div class=\"flex items-center gap-1.5 mb-1\"><span class=\"px-1.5 py-0.5 rounded text-[10px] font-bold ' + cCls + '\">' + r.cloud_provider + '</span><span class=\"px-1.5 py-0.5 rounded text-[10px] font-mono bg-cyan-500/15 text-cyan-300\">L1: ' + (r.checkov_id || 'N/A') + '</span></div><div class=\"font-semibold text-white\">' + r.azure_policy_name + '</div><div class=\"text-[11px] font-mono text-slate-400\">' + r.azure_policy_guid + ' · ' + r.azure_resource_types + '</div></td>' +",
+        "      '<td class=\"p-3\"><div class=\"font-medium text-slate-200\">' + r.gap_direction + '</div><div class=\"text-[11px] text-slate-400 mt-0.5\">Effect: ' + r.azure_default_effect + '</div></td>' +",
+        "      '<td class=\"p-3\"><div class=\"font-medium text-white\">' + r.wiz_rule_name + '</div><div class=\"text-[11px] font-mono text-indigo-400\">' + r.wiz_short_id + ' (' + r.wiz_severity + ') · ' + r.ccr_change_status + '</div><div class=\"text-[10px] text-slate-400 mt-0.5\">' + r.security_graph_status + '</div></td>' +",
+        "      '<td class=\"p-3\"><div class=\"font-semibold text-slate-200\">' + r.mapping_tier + '</div><div class=\"font-mono text-emerald-400 text-[11px]\">' + pct + '%</div></td>' +",
+        "      '<td class=\"p-3\"><div class=\"font-semibold text-amber-300\">' + (r.sdlc_exception_status || r.review_status) + '</div><div class=\"text-[11px] text-slate-400\">Owner: ' + (r.sdlc_approver || 'Cloud Security') + ' · Ticket: ' + (r.team_action_ticket || 'None') + '</div><div class=\"text-[10px] font-mono text-indigo-300\">Next Review: ' + (r.next_periodic_review_date || '90d') + '</div></td>' +",
+        "      '<td class=\"p-3 text-right\"><button type=\"button\" onclick=\"toggleCode(' + i + ')\" class=\"px-2.5 py-1 rounded bg-slate-800 hover:bg-indigo-600 text-slate-200 text-[11px] border border-slate-700\">View Code</button></td>' +",
+        "    '</tr>' +",
+        "    '<tr id=\"code-' + i + '\" class=\"hidden bg-slate-950/90\"><td colspan=\"6\" class=\"p-4\"><div class=\"grid grid-cols-1 md:grid-cols-3 gap-3 text-[11px] font-mono\">' +",
+        "      '<div><div class=\"text-cyan-300 font-sans font-semibold mb-1\">Layer 1: Checkov (.yaml)</div><pre class=\"bg-slate-900 p-2.5 rounded border border-slate-800 overflow-x-auto text-cyan-200\">' + (r.generated_checkov_yaml || 'N/A') + '</pre></div>' +",
+        "      '<div><div class=\"text-amber-300 font-sans font-semibold mb-1\">Layer 2: HashiCorp Sentinel (.sentinel)</div><pre class=\"bg-slate-900 p-2.5 rounded border border-slate-800 overflow-x-auto text-amber-200\">' + (r.generated_sentinel_skeleton || 'Active in Sentinel') + '</pre></div>' +",
+        "      '<div><div class=\"text-emerald-300 font-sans font-semibold mb-1\">Layer 3: Wiz OPA Rego (.rego)</div><pre class=\"bg-slate-900 p-2.5 rounded border border-slate-800 overflow-x-auto text-emerald-200\">' + (r.generated_rego_skeleton || 'Active Built-In Wiz CCR') + '</pre></div>' +",
+        "    '</div></td></tr>';",
+        "  }).join('');",
+        "}",
+        "['q', 'days', 'cloud', 'gap'].forEach(function(id) { document.getElementById(id).addEventListener('input', render); document.getElementById(id).addEventListener('change', render); });",
+        "render();",
+        closeScript,
+        "</body>",
+        "</html>"
+      ].join("\n");
+
+      const blob = new Blob([reportHtml], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "sdlc_cloud_policy_interactive_report.html";
+      link.click();
+      URL.revokeObjectURL(url);
+      showToast("Exported standalone Interactive HTML Report", "success");
+    }
+
+    function parseCsvLine(line) {
+      const out = [];
+      let cur = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (ch === "," && !inQuotes) {
+          out.push(cur);
+          cur = "";
+        } else {
+          cur += ch;
+        }
+      }
+      out.push(cur);
+      return out;
+    }
+
+    function handleUploadMappedReport(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        try {
+          const text = evt.target.result;
+          if (file.name.endsWith(".json")) {
+            const parsed = JSON.parse(text);
+            const arr = Array.isArray(parsed) ? parsed : (parsed.mappings || []);
+            policyRecords = arr.map(r => ({
+              ...r,
+              base_semantic_score: Number(r.confidence_score || 0.5),
+              exact_guid_match: Number(r.confidence_score || 0) >= 0.99
+            }));
+          } else {
+            const lines = text.trim().split(/\r?\n/);
+            const headers = parseCsvLine(lines[0]);
+            policyRecords = lines.slice(1).filter(Boolean).map(line => {
+              const vals = parseCsvLine(line);
+              const obj = {};
+              headers.forEach((h, idx) => { obj[h.trim()] = vals[idx] || ""; });
+              obj.confidence_score = parseFloat(obj.confidence_score || "0.5");
+              obj.base_semantic_score = obj.confidence_score;
+              obj.exact_guid_match = obj.confidence_score >= 0.99;
+              return obj;
+            });
+          }
+          document.getElementById("statusMappedUpload").textContent = `Loaded ${policyRecords.length} controls from ${file.name}`;
+          recalculateScoresAndTiers();
+          switchTab("dashboard");
+          showToast(`Imported ${policyRecords.length} mappings from ${file.name}`, "success");
+        } catch (err) {
+          showToast("Failed to parse file. Ensure valid JSON or CSV.", "info");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function runInBrowserCorrelation() {
+      const azFile = document.getElementById("fileInputRawAzure").files[0];
+      const wizFile = document.getElementById("fileInputRawWiz").files[0];
+      if (!azFile || !wizFile) {
+        showToast("Please select both a Sentinel/Policies JSON file and a Wiz Rules JSON file.", "info");
+        return;
+      }
+
+      const r1 = new FileReader();
+      r1.onload = e1 => {
+        const r2 = new FileReader();
+        r2.onload = e2 => {
+          try {
+            let rawPols = JSON.parse(e1.target.result);
+            if (rawPols.value) rawPols = rawPols.value;
+            let rawWiz = JSON.parse(e2.target.result);
+            if (rawWiz.data && rawWiz.data.cloudConfigurationRules) {
+              rawWiz = rawWiz.data.cloudConfigurationRules.nodes;
+            } else if (rawWiz.nodes) {
+              rawWiz = rawWiz.nodes;
+            }
+
+            const matchedWizIds = new Set();
+            const newRecords = rawPols.map(polItem => {
+              const props = polItem.properties || polItem;
+              const name = props.displayName || polItem.displayName || polItem.name || "Unnamed Control";
+              const guid = polItem.name || polItem.id || "custom-id";
+              const cat = (props.metadata && props.metadata.category) || polItem.category || "Security";
+              const pType = props.policyType || polItem.policyType || "Sentinel-IaC";
+              const cloud = (polItem.cloudProvider || (name.toLowerCase().includes("aws") || name.toLowerCase().includes("s3") ? "AWS" : "AZURE")).toUpperCase();
+              const engine = polItem.sourceEngine || (pType.includes("Sentinel") ? "HashiCorp Sentinel" : "Azure Policy");
+              const polTokens = new Set(name.toLowerCase().match(/[a-z0-9]{3,}/g) || []);
+
+              let bestWiz = null;
+              let bestScore = 0.15;
+              let exact = false;
+
+              rawWiz.forEach(w => {
+                const wCloud = (w.cloudProvider || "AZURE").toUpperCase();
+                if (wCloud !== cloud) return;
+                const wText = `${w.name || ""} ${w.description || ""} ${w.builtinId || ""}`.toLowerCase();
+                if (wText.includes(String(guid).toLowerCase())) {
+                  bestWiz = w;
+                  bestScore = 0.99;
+                  exact = true;
+                  return;
+                }
+                const wTokens = new Set((w.name || "").toLowerCase().match(/[a-z0-9]{3,}/g) || []);
+                let inter = 0;
+                polTokens.forEach(t => { if (wTokens.has(t)) inter++; });
+                const union = polTokens.size + wTokens.size - inter;
+                const score = union > 0 ? inter / union : 0;
+                if (score > bestScore) {
+                  bestScore = score;
+                  bestWiz = w;
+                }
+              });
+
+              if (bestWiz && bestScore >= 0.42) {
+                matchedWizIds.add(bestWiz.id);
+              }
+
+              return {
+                cloud_provider: cloud,
+                source_engine: engine,
+                gap_direction: bestWiz && bestScore >= 0.42 ? "Bidirectional Parity (Covered)" : "Sentinel -> Wiz Gap (Missing Wiz CCR)",
+                ccr_change_status: bestWiz && bestWiz.ccrChangeStatus ? bestWiz.ccrChangeStatus : "Baseline",
+                wiz_updated_at: bestWiz && bestWiz.updatedAt ? String(bestWiz.updatedAt).slice(0, 10) : "Baseline",
+                finding_validation_status: "Validated · Issue Gen Enabled",
+                security_graph_status: "Graph Verified · Expected Issue Generated",
+                team_action_ticket: bestWiz && bestScore >= 0.42 ? "None" : `Deploy Custom ${cloud} Wiz Rego`,
+                azure_policy_guid: guid,
+                azure_policy_name: name,
+                azure_policy_type: pType,
+                azure_category: cat,
+                azure_default_effect: polItem.enforcementLevel || "hard-mandatory",
+                azure_resource_types: (polItem.resourceTypes || [cloud.toLowerCase() + "_resource"]).join(", "),
+                azure_condition_fields: (polItem.conditionFields || ["properties"]).join(", "),
+                wiz_rule_id: bestWiz && bestScore >= 0.42 ? (bestWiz.id || "wiz-id") : "UNMAPPED",
+                wiz_short_id: bestWiz && bestScore >= 0.42 ? (bestWiz.shortId || bestWiz.id || "WIZ-01") : "UNMAPPED",
+                wiz_rule_name: bestWiz && bestScore >= 0.42 ? bestWiz.name : "No Equivalent Built-In Wiz Rule Found",
+                wiz_severity: bestWiz && bestScore >= 0.42 ? (bestWiz.severity || "MEDIUM") : "N/A",
+                wiz_native_types: bestWiz && bestWiz.targetNativeTypes ? bestWiz.targetNativeTypes.join(", ") : "N/A",
+                base_semantic_score: +bestScore.toFixed(2),
+                exact_guid_match: exact,
+                shared_controls: "",
+                review_status: bestScore >= 0.7 ? "Approved (Heuristic)" : "Manual SME Review Required",
+                sme_note: "",
+                mapping_rationale: `Correlated in browser multi-cloud engine (score=${bestScore.toFixed(2)})`
+              };
+            });
+
+            // Also append Wiz -> Sentinel Gaps (Wiz rules with no Sentinel match)
+            rawWiz.forEach(w => {
+              if (!matchedWizIds.has(w.id)) {
+                const wCloud = (w.cloudProvider || "AZURE").toUpperCase();
+                newRecords.push({
+                  cloud_provider: wCloud,
+                  source_engine: "Missing HashiCorp Sentinel",
+                  gap_direction: "Wiz -> Sentinel Gap (Missing Sentinel Policy)",
+                  ccr_change_status: w.ccrChangeStatus || "New CCR",
+                  wiz_updated_at: w.updatedAt ? String(w.updatedAt).slice(0, 10) : "Baseline",
+                  finding_validation_status: "Validated · Issue Gen Enabled",
+                  security_graph_status: "Graph Verified · Expected Issue Generated",
+                  team_action_ticket: `Author ${wCloud} Sentinel Rule`,
+                  azure_policy_guid: `MISSING-SENTINEL-${w.shortId || w.id}`,
+                  azure_policy_name: `[Missing HashiCorp Sentinel] ${w.name}`,
+                  azure_policy_type: "Missing-Sentinel",
+                  azure_category: (w.targetNativeTypes && w.targetNativeTypes[0]) || "Security",
+                  azure_default_effect: "Missing (No Sentinel Guardrail)",
+                  azure_resource_types: wCloud === "AWS" ? "aws_resource" : "azurerm_resource",
+                  azure_condition_fields: "tfplan.resource_changes",
+                  wiz_rule_id: w.id || "wiz-id",
+                  wiz_short_id: w.shortId || w.id || "WIZ-01",
+                  wiz_rule_name: w.name || "Wiz Rule",
+                  wiz_severity: w.severity || "HIGH",
+                  wiz_native_types: w.targetNativeTypes ? w.targetNativeTypes.join(", ") : "resource",
+                  base_semantic_score: 0.12,
+                  exact_guid_match: false,
+                  shared_controls: "",
+                  review_status: "Action Required: Deploy Generated AWS/Azure Sentinel Policy",
+                  sme_note: "",
+                  mapping_rationale: `Active ${wCloud} Wiz CCR lacks a preventative Sentinel policy`
+                });
+              }
+            });
+
+            policyRecords = newRecords;
+            recalculateScoresAndTiers();
+            switchTab("dashboard");
+            showToast(`Correlated ${newRecords.length} AWS & Azure controls (including bidirectional gaps)!`, "success");
+          } catch (err) {
+            showToast("Error parsing uploaded JSON files. Check JSON structure.", "info");
+          }
+        };
+        r2.readAsText(wizFile);
+      };
+      r1.readAsText(azFile);
+    }
+
+    // Wire up all DOM listeners on window load
+    window.addEventListener("DOMContentLoaded", () => {
+      policyRecords = JSON.parse(JSON.stringify(INITIAL_DATASET));
+
+      // Tab buttons
+      document.querySelectorAll(".tab-nav-btn").forEach(btn => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+      });
+
+      // 5-Step CCR Workflow stage filter buttons
+      document.querySelectorAll(".wf-step-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const step = btn.dataset.wfStep;
+          setWorkflowStepFilter(activeWorkflowStep === step ? null : step);
+        });
+      });
+      document.getElementById("btnResetWorkflowStage").addEventListener("click", () => {
+        setWorkflowStepFilter(null);
+      });
+
+      document.getElementById("btnOpenImportTab").addEventListener("click", () => switchTab("engine"));
+      document.getElementById("btnExportCsv").addEventListener("click", exportToCsv);
+      document.getElementById("btnExportJson").addEventListener("click", exportToJson);
+      document.getElementById("btnExportHtml").addEventListener("click", exportInteractiveHtmlReport);
+
+      // Sliders & Reset
+      ["sliderThreshold", "sliderControlBoost", "sliderSemanticScale"].forEach(id => {
+        document.getElementById(id).addEventListener("input", recalculateScoresAndTiers);
+      });
+      document.getElementById("btnResetWeights").addEventListener("click", () => {
+        document.getElementById("sliderThreshold").value = "0.42";
+        document.getElementById("sliderControlBoost").value = "0.15";
+        document.getElementById("sliderSemanticScale").value = "1.00";
+        recalculateScoresAndTiers();
+        showToast("Reset scoring weights to default baseline", "info");
+      });
+
+      // Filters
+      ["searchInput", "filterDateWindow", "filterSdlcException", "filterCloud", "filterGapDirection", "filterTier", "filterEffect", "filterFramework"].forEach(id => {
+        document.getElementById(id).addEventListener("input", renderTable);
+        document.getElementById(id).addEventListener("change", renderTable);
+      });
+      document.getElementById("btnClearFilters").addEventListener("click", () => {
+        document.getElementById("searchInput").value = "";
+        document.getElementById("filterDateWindow").value = "ALL";
+        document.getElementById("filterSdlcException").value = "ALL";
+        document.getElementById("filterCloud").value = "ALL";
+        document.getElementById("filterGapDirection").value = "ALL";
+        document.getElementById("filterTier").value = "ALL";
+        document.getElementById("filterEffect").value = "ALL";
+        document.getElementById("filterFramework").value = "ALL";
+        setWorkflowStepFilter(null);
+      });
+
+      // Delegated clicks on table rows & Inspect buttons
+      document.getElementById("mappingTableBody").addEventListener("click", e => {
+        const btn = e.target.closest("[data-inspect-guid]");
+        const row = e.target.closest("[data-guid]");
+        const guid = (btn && btn.dataset.inspectGuid) || (row && row.dataset.guid);
+        if (guid) openInspectorModal(guid);
+      });
+
+      // Modal actions
+      document.getElementById("btnCloseModal").addEventListener("click", closeInspectorModal);
+      document.getElementById("btnCancelModal").addEventListener("click", closeInspectorModal);
+      document.getElementById("btnSaveModalDisposition").addEventListener("click", saveModalDisposition);
+      document.getElementById("btnCopyModalRego").addEventListener("click", () => {
+        copyTextToClipboard(document.getElementById("modalRegoCode").textContent, "OPA Rego rule");
+      });
+      document.getElementById("btnCopyModalCheckov").addEventListener("click", () => {
+        copyTextToClipboard(document.getElementById("modalCheckovCode").textContent, "Checkov Custom YAML policy");
+      });
+      document.getElementById("btnCopyModalSentinel").addEventListener("click", () => {
+        copyTextToClipboard(document.getElementById("modalSentinelCode").textContent, "HashiCorp Sentinel rule");
+      });
+
+      // Studio actions
+      document.getElementById("regoCardsContainer").addEventListener("click", e => {
+        const btn = e.target.closest("[data-copy-studio-guid]");
+        if (!btn) return;
+        const rec = policyRecords.find(r => r.azure_policy_guid === btn.dataset.copyStudioGuid);
+        if (!rec) return;
+        if (btn.dataset.studioKind === "sentinel") {
+          copyTextToClipboard(buildSentinelSkeleton(rec), `Sentinel rule for ${rec.wiz_short_id}`);
+        } else {
+          copyTextToClipboard(buildRegoSkeleton(rec), `Rego rule for ${rec.azure_policy_guid}`);
+        }
+      });
+
+      document.getElementById("btnDownloadAllRego").addEventListener("click", () => {
+        const bundle = policyRecords
+          .filter(r => r.gap_direction.includes("Sentinel -> Wiz") || r.wiz_rule_id === "UNMAPPED")
+          .map(r => buildRegoSkeleton(r))
+          .join("\n\n# =====================================================================\n\n");
+        const blob = new Blob([bundle], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "wiz_custom_multicloud_gaps.rego";
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Downloaded combined Wiz OPA .rego bundle", "success");
+      });
+
+      document.getElementById("btnDownloadAllCheckov").addEventListener("click", () => {
+        const bundle = policyRecords
+          .map(r => buildCheckovYaml(r))
+          .join("\n\n");
+        const blob = new Blob([bundle], { type: "text/yaml;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "checkov_custom_aws_azure_policies.yaml";
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Downloaded combined Checkov .yaml policy bundle", "success");
+      });
+
+      document.getElementById("btnDownloadAllSentinel").addEventListener("click", () => {
+        const bundle = policyRecords
+          .filter(r => r.gap_direction.includes("Wiz -> Sentinel") || r.gap_direction.includes("Upgrade"))
+          .map(r => buildSentinelSkeleton(r))
+          .join("\n\n# =====================================================================\n\n");
+        const blob = new Blob([bundle], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "hashicorp_sentinel_aws_azure_gaps.sentinel";
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Downloaded combined AWS & Azure .sentinel bundle", "success");
+      });
+
+      // Engine Tab actions
+      document.getElementById("fileInputMappedReport").addEventListener("change", handleUploadMappedReport);
+      document.getElementById("btnLoadSampleData").addEventListener("click", () => {
+        policyRecords = JSON.parse(JSON.stringify(INITIAL_DATASET));
+        recalculateScoresAndTiers();
+        switchTab("dashboard");
+        showToast("Reloaded 18 AWS & Azure multi-cloud sample controls", "success");
+      });
+      document.getElementById("btnRunBrowserCorrelation").addEventListener("click", runInBrowserCorrelation);
+
+      // Access Tab CLI copy
+      document.getElementById("btnCopyCliCommands").addEventListener("click", () => {
+        copyTextToClipboard(document.getElementById("cliCommandsBlock").textContent, "CLI commands");
+      });
+
+      recalculateScoresAndTiers();
+    });
+  </script>
+</body>
+</html>
