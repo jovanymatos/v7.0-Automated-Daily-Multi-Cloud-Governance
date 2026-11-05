@@ -1,0 +1,15 @@
+# Enforce HTTPS traffic only on Azure Storage Accounts [CCM CEK-03, CIS 3.1, NIST SP 800-53 SC-8]
+# Linked Wiz CCR: StorageAccount-001 | Linked Checkov ID: CKV_AZURE_3
+import "tfplan/v2" as tfplan
+
+az_storage_accounts = filter tfplan.resource_changes as _, rc {
+    rc.type is "azurerm_storage_account" and
+    rc.mode is "managed" and
+    (rc.change.actions contains "create" or rc.change.actions contains "update")
+}
+
+main = rule {
+    all az_storage_accounts as _, r {
+        r.change.after.enable_https_traffic_only is true
+    }
+}

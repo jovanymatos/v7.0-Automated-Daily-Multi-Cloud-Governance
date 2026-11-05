@@ -1,0 +1,107 @@
+{
+  "description": "Externalized Multi-Cloud Resource Type Taxonomy & Scoring Weights (Update via PR without modifying Python code)",
+  "weights": {
+    "name_jaccard": 0.4,
+    "name_sequence": 0.25,
+    "desc_jaccard": 0.2,
+    "resource_type": 0.15,
+    "control_boost_per_match": 0.15,
+    "control_boost_max": 0.25
+  },
+  "resource_map": {
+    "azurerm_storage_account": [
+      "storageaccount",
+      "storageaccounts",
+      "blobservice"
+    ],
+    "azurerm_key_vault": [
+      "keyvault",
+      "vault",
+      "keyvaultkey",
+      "keyvaultsecret"
+    ],
+    "azurerm_mssql_database": [
+      "sqldatabase",
+      "sqlserver",
+      "sql"
+    ],
+    "azurerm_network_security_group": [
+      "networksecuritygroup",
+      "nsg",
+      "securitygroup"
+    ],
+    "azurerm_kubernetes_cluster": [
+      "aks",
+      "kubernetescluster",
+      "managedcluster"
+    ],
+    "azurerm_managed_disk": [
+      "disk",
+      "manageddisk"
+    ],
+    "azurerm_linux_web_app": [
+      "webapp",
+      "appservice"
+    ],
+    "azurerm_cosmosdb_account": [
+      "cosmosdb",
+      "databaseaccount"
+    ],
+    "azurerm_eventhub_namespace": [
+      "eventhub",
+      "namespace"
+    ],
+    "azurerm_cognitive_account": [
+      "cognitiveaccount",
+      "openai"
+    ],
+    "aws_s3_bucket": [
+      "bucket",
+      "s3bucket",
+      "s3"
+    ],
+    "aws_s3_bucket_public_access_block": [
+      "bucket",
+      "s3bucket",
+      "s3"
+    ],
+    "aws_kms_key": [
+      "encryptionkey",
+      "kmskey",
+      "kms"
+    ],
+    "aws_db_instance": [
+      "rds",
+      "rdsinstance",
+      "dbinstance",
+      "database"
+    ],
+    "aws_security_group": [
+      "securitygroup",
+      "awssecuritygroup",
+      "sg"
+    ],
+    "aws_instance": [
+      "virtualmachine",
+      "ec2",
+      "ec2instance",
+      "instance"
+    ],
+    "aws_ebs_volume": [
+      "volume",
+      "ebsvolume",
+      "disk",
+      "ebs"
+    ],
+    "aws_eks_cluster": [
+      "eks",
+      "kubernetescluster",
+      "cluster"
+    ],
+    "aws_cloudtrail": [
+      "cloudtrail",
+      "trail",
+      "loggroup"
+    ]
+  }
+}

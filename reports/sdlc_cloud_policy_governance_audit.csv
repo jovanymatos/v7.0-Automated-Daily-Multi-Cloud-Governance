@@ -1,0 +1,93 @@
+cloud_provider,source_engine,gap_direction,checkov_id,checkov_status,ccr_change_status,wiz_updated_at,sdlc_governance_stage,rule_exception_status,exception_justification,approver_signoff,next_periodic_review_date,finding_validation_status,issue_generation_configured,security_graph_status,preventative_control_coverage,team_action_ticket,azure_policy_guid,azure_policy_name,azure_policy_type,azure_category,azure_default_effect,azure_resource_types,azure_condition_fields,wiz_rule_id,wiz_short_id,wiz_rule_name,wiz_severity,wiz_native_types,mapping_tier,confidence_score,shared_controls,review_status,mapping_rationale,generated_checkov_yaml,generated_sentinel_skeleton,generated_rego_skeleton
+AZURE,HashiCorp Sentinel,Bidirectional Parity (Covered),CKV_AZURE_3,Built-In CKV Active (CI/PR Gate),Updated CCR (24h Daily),2026-10-24T14:20:00Z,Daily SDLC Review & Testing Queue,Active Policy (Pending Daily Sign-Off),N/A (Active Baseline Control under 24-hour Daily SDLC evaluation),Pending Policies Review (Snehal),2027-02-03,Pending False-Positive Check,Enabled (Auto-Creates Wiz Issue),"Graph Linked (2 Control, 4 Failing / 182 Passing)",3-Layer Active (CKV_AZURE_3 + Sentinel hard-mandatory + Wiz),"None (Covered in Checkov, Sentinel & Wiz)",sentinel-azurerm-storage-https-only,Enforce HTTPS traffic only on Azure Storage Accounts,Sentinel-IaC,Storage,hard-mandatory,azurerm_storage_account,enable_https_traffic_only,wc-az-001,StorageAccount-001,Storage account should enforce secure transfer (HTTPS),HIGH,storageaccount,Tier 4: Candidate Match,0.6139,"CCM CEK-03, CIS 3.1",Manual SME Review Required,"Shared controls: CCM CEK-03, CIS 3.1; Matched AZURE resource type; Similarity=0.61","---
+# Auto-generated Checkov Custom YAML Policy (Layer 1: CI / PR Static Scan)
+metadata:
+  id: ""CKV_AZURE_3""
+  name: ""Enforce HTTPS traffic only on Azure Storage Accounts""
+  category: ""STORAGE""
+  severity: ""HIGH""
+definition:
+  cond_type: ""attribute""
+  resource_types:
+    - ""azurerm_storage_account""
+  attribute: ""enable_https_traffic_only""
+  operator: ""exists""",,"package wiz
+
+# Auto-generated Wiz Custom CCR (OPA Rego) for AZURE HashiCorp Sentinel: Enforce HTTPS traffic only on Azure Storage Accounts
+# Source Sentinel ID: sentinel-azurerm-storage-https-only | Enforcement Level: hard-mandatory
+# Target Resource Type(s): azurerm_storage_account
+
+default result = ""PASS""
+
+result = ""FAIL"" {
+    # Verify runtime resource attribute mapped from HashiCorp Sentinel: enable_https_traffic_only
+    input.enable_https_traffic_only == null
+}
+
+currentConfiguration := sprintf(""Evaluated field 'enable_https_traffic_only' on AZURE resource %v"", [input.id])
+expectedConfiguration := ""Enforce HTTPS traffic only on Azure Storage Accounts must comply with enterprise security standard"""
+AWS,HashiCorp Sentinel,Bidirectional Parity (Covered),CKV_AWS_53,Built-In CKV Active (CI/PR Gate),Updated CCR (24h Daily),2026-10-20T11:00:00Z,Daily SDLC Review & Testing Queue,Active Policy (Pending Daily Sign-Off),N/A (Active Baseline Control under 24-hour Daily SDLC evaluation),Pending Policies Review (Snehal),2027-02-03,Validated (AWS Env),Enabled (Auto-Creates Wiz Issue),"Graph Linked (3 Control, 1 Failing / 410 Passing)",3-Layer Active (CKV_AWS_53 + Sentinel hard-mandatory + Wiz),"None (Covered in Checkov, Sentinel & Wiz)",sentinel-aws-s3-block-public-access,Block S3 bucket public access at account and bucket level,Sentinel-IaC,Storage,hard-mandatory,aws_s3_bucket_public_access_block,"block_public_acls, block_public_policy",wc-aws-101,S3Bucket-004,S3 bucket should block public access,CRITICAL,bucket,Tier 2: Compliance Crosswalk,0.8403,"CCM DSP-17, CIS AWS",Approved (Crosswalk),"Shared controls: CCM DSP-17, CIS AWS; Matched AWS resource type; Similarity=0.84","---
+# Auto-generated Checkov Custom YAML Policy (Layer 1: CI / PR Static Scan)
+metadata:
+  id: ""CKV_AWS_53""
+  name: ""Block S3 bucket public access at account and bucket level""
+  category: ""STORAGE""
+  severity: ""HIGH""
+definition:
+  cond_type: ""attribute""
+  resource_types:
+    - ""aws_s3_bucket_public_access_block""
+  attribute: ""block_public_acls""
+  operator: ""exists""",,
+AWS,HashiCorp Sentinel,Sentinel -> Wiz Gap (Missing Wiz CCR),CKV2_CUSTOM_AWS_REQUIRE_BANK_COSTC,Custom Checkov YAML Needed (CI/PR Gap),Gap: Missing in Wiz,N/A,Custom Rule SDLC Development (Trevor),Custom Rule Pending Deployment,Internal bank policy enforced in Sentinel; custom Wiz OPA Rego rule in SDLC development.,Pending Custom Rule Management (Trevor),2027-02-03,Relevant (AWS Custom Guardrail),Not Configured (Requires Custom Wiz CCR),No Linked Graph Control,Preventative HashiCorp Sentinel (hard-mandatory) Only — Missing Wiz Drift Check,Create Team Issue: Deploy Custom Wiz OPA Rego CCR & CKV2_CUSTOM_AWS_REQUIRE_BANK_COSTC,fin-sentinel-aws-mandatory-cost-tags,"Require Bank CostCenter, DataClassification, and AppID tags on all AWS resources",Custom,Tags,hard-mandatory,"aws_db_instance, aws_instance, aws_s3_bucket","tags.CostCenter, tags.DataClassification",UNMAPPED,UNMAPPED,No Equivalent Built-In Wiz Rule Found,N/A,N/A,Tier 5: Coverage Gap,0.2293,"CCM GRC-01, FFIEC ASSET GOVERNANCE, FFIEC COSTCENTER",Action Required: Build Custom Wiz Rego Rule,Matched AWS resource type; Similarity=0.23,"---
+# Auto-generated Checkov Custom YAML Policy (Layer 1: CI / PR Static Scan)
+metadata:
+  id: ""CKV2_CUSTOM_AWS_REQUIRE_BANK_COSTC""
+  name: ""Require Bank CostCenter, DataClassification, and AppID tags on all AWS resources""
+  category: ""TAGS""
+  severity: ""HIGH""
+definition:
+  cond_type: ""attribute""
+  resource_types:
+    - ""aws_db_instance""
+    - ""aws_instance""
+    - ""aws_s3_bucket""
+  attribute: ""tags.CostCenter""
+  operator: ""exists""",,"package wiz
+
+# Auto-generated Wiz Custom CCR (OPA Rego) for AWS HashiCorp Sentinel: Require Bank CostCenter, DataClassification, and AppID tags on all AWS resources
+# Source Sentinel ID: fin-sentinel-aws-mandatory-cost-tags | Enforcement Level: hard-mandatory
+# Target Resource Type(s): aws_db_instance, aws_instance, aws_s3_bucket
+
+default result = ""PASS""
+
+result = ""FAIL"" {
+    # Verify runtime resource attribute mapped from HashiCorp Sentinel: tags.CostCenter
+    input.tags.CostCenter == null
+}
+
+currentConfiguration := sprintf(""Evaluated field 'tags.CostCenter' on AWS resource %v"", [input.id])
+expectedConfiguration := ""Require Bank CostCenter, DataClassification, and AppID tags on all AWS resources must comply with enterprise security standard"""
+AWS,Missing HashiCorp Sentinel,Wiz -> Sentinel Gap (Missing Sentinel Policy),CKV_AWS_16,Built-In CKV Active (CKV_AWS_16 in CI/PR),New CCR (24h Daily),2026-10-25T09:30:00Z,Excluded (Documented Rule Exception),Excluded - Not Applicable to Cloud Architecture,Wiz rule (RDS-011) evaluated during daily review and excluded as not applicable to bank AWS architecture.,Approved Exception (Policies Review - Snehal),2027-02-03,Excluded / Not Applicable (Exception),Disabled (Rule Exception),"Graph Linked (2 Control, 0 Failing / 95 Passing)",Gap: Wiz Runtime + CKV_AWS_16 — Missing AWS HashiCorp Sentinel Gate,Create Team Issue: Author AWS HashiCorp Sentinel Policy (aws_db_instance),MISSING-SENTINEL-RDS-011,[Missing HashiCorp Sentinel] RDS DB instance storage encryption should be enabled with KMS CMK,Missing-Sentinel,RDS,Missing (No Sentinel in TFC/TFE),aws_db_instance,tfplan.resource_changes (aws_db_instance),wc-aws-205,RDS-011,RDS DB instance storage encryption should be enabled with KMS CMK,HIGH,rds,Tier 5: Coverage Gap,0.0,"CCM CEK-04, PCI-DSS, WSCT-AWS-309",Action Required: Deploy Generated AWS HashiCorp Sentinel Policy,Active AWS Wiz CCR (RDS-011) maps to CKV_AWS_16 in CI but lacks a TFC/TFE Sentinel policy,"---
+# Auto-generated Checkov Custom YAML Policy (Layer 1: CI / PR Static Scan)
+metadata:
+  id: ""CKV_AWS_16""
+  name: ""RDS DB instance storage encryption should be enabled with KMS CMK""
+  category: ""RDS""
+  severity: \"HIGH\"
+definition:
+  cond_type: ""attribute""
+  resource_types:
+    - ""aws_db_instance""
+  attribute: ""security_configuration""
+  operator: ""exists""","# Auto-generated HashiCorp Sentinel Policy for AWS Wiz CCR: RDS-011
+# Wiz Rule: RDS DB instance storage encryption should be enabled with KMS CMK (Severity: HIGH)
+# sentinel.hcl registration:
+# policy ""rds-011"" {
+#   source            = ""./rds-011.sentinel""
+#   enforcement_level = ""hard-mandatory""
+# }
+
+import ""tfplan/v2"" as tfplan
+
+target_resources = filter tfplan.resource_changes as _, rc {\n    rc.type is ""aws_db_instance"" and\n    rc.mode is ""managed"" and\n    (rc.change.actions contains ""create"" or rc.change.actions contains ""update"")\n}\n\nrds_db_instance_storage_encryption_should_be_ = rule {\n    all target_resources as _, r {\n        # Validate required security attribute for RDS-011\n        r.change.after is not null\n    }\n}\n\nmain = rule {\n    rds_db_instance_storage_encryption_should_be_\n}",

@@ -1,0 +1,28 @@
+---
+# Custom Checkov YAML Policies (Layer 1: IDE / Pre-Commit / PR Static Scanning)
+metadata:
+  id: "CKV2_CUSTOM_AWS_TAGS"
+  name: "Require Bank CostCenter, DataClassification, and AppID tags on all AWS resources"
+  category: "GENERAL_SECURITY"
+  severity: "HIGH"
+definition:
+  cond_type: "attribute"
+  resource_types:
+    - "aws_s3_bucket"
+    - "aws_instance"
+    - "aws_db_instance"
+  attribute: "tags.CostCenter"
+  operator: "exists"
+---
+metadata:
+  id: "CKV2_CUSTOM_AZ_TAGS"
+  name: "Require Enterprise CostCenter, GLCode, and DataClassification tags on Azure resources"
+  category: "GENERAL_SECURITY"
+  severity: "HIGH"
+definition:
+  cond_type: "attribute"
+  resource_types:
+    - "azurerm_resource_group"
+    - "azurerm_storage_account"
+  attribute: "tags.CostCenter"
+  operator: "exists"

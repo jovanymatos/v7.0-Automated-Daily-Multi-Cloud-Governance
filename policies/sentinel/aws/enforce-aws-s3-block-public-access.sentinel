@@ -1,0 +1,18 @@
+# Block S3 bucket public access at account and bucket level [CCM DSP-17, CIS AWS 2.1.5, PCI-DSS 1.2.1]
+# Linked Wiz CCR: S3Bucket-004 | Linked Checkov ID: CKV_AWS_53
+import "tfplan/v2" as tfplan
+
+s3_public_blocks = filter tfplan.resource_changes as _, rc {
+    rc.type is "aws_s3_bucket_public_access_block" and
+    rc.mode is "managed" and
+    (rc.change.actions contains "create" or rc.change.actions contains "update")
+}
+
+main = rule {
+    all s3_public_blocks as _, r {
+        r.change.after.block_public_acls is true and
+        r.change.after.block_public_policy is true and
+        r.change.after.ignore_public_acls is true and
+        r.change.after.restrict_public_buckets is true
+    }
+}
