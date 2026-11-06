@@ -112,25 +112,7 @@
             </p>
           </div>
           <div class="flex flex-wrap items-center gap-2 text-xs">
-            <div class="flex items-center gap-1.5 bg-slate-950 border border-indigo-500/50 rounded-lg px-2.5 py-1">
-              <label for="filterDateWindow" class="text-[11px] text-indigo-300 font-semibold whitespace-nowrap">Policy Creation Date:</label>
-              <select id="filterDateWindow" class="bg-slate-950 text-xs text-white font-semibold focus:outline-none cursor-pointer">
-                <option value="ALL">All Dates (Full Catalog)</option>
-                <option value="1">1 Day (Last 24h)</option>
-                <option value="7">7 Days</option>
-                <option value="30">30 Days</option>
-                <option value="90">90 Days</option>
-                <option value="180">180 Days</option>
-                <option value="365">365 Days</option>
-              </select>
-            </div>
-            <select id="filterSdlcException" class="bg-slate-950 border border-amber-500/50 rounded-lg px-3 py-1.5 text-xs text-amber-200 font-medium focus:outline-none focus:border-amber-400">
-              <option value="ALL">All SDLC &amp; Exception States</option>
-              <option value="Daily SDLC">1. Daily Intake Queue (Policies Review)</option>
-              <option value="Excluded">2. Excluded Rule Exceptions (Periodic Reassessment)</option>
-              <option value="Custom Rule">3. Custom Rule Management (Checkov/Sentinel/Rego)</option>
-              <option value="SDLC Approved">4. SDLC Approved &amp; Implemented Baseline</option>
-            </select>
+            <span class="px-2.5 py-1 rounded-lg bg-slate-950/90 border border-indigo-500/40 text-[11px] font-mono text-indigo-300">Daily 24h Sync · 90d Exception Reassessment</span>
           </div>
         </div>
       </div>
@@ -286,20 +268,88 @@
         </div>
       </div>
 
-      <!-- Filter & Search Toolbar -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5">
-          <div class="sm:col-span-2">
-            <label for="searchInput" class="block text-[11px] font-medium text-slate-400 mb-1">Search Wiz Policy, HashiCorp Sentinel Rule (AWS/Azure), Resource, or Ticket</label>
-            <input id="searchInput" type="text" placeholder="e.g. aws_s3_bucket, RDS, KeyVault, Sentinel, Missing..." class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+      <!-- Unified All-In-One Filter & Search Command Bar (Directly Above Policies) -->
+      <div class="bg-slate-900/95 border border-slate-800 rounded-xl p-4 space-y-3.5 shadow-lg">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">Unified Policy Filter Hub</span>
+            <h3 class="text-xs font-bold text-white">All Policy Filters &amp; Search Controls</h3>
+            <span id="activeFilterCountBadge" class="hidden px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">0 Active Filters</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="quickFilterStats" class="text-[11px] text-slate-400 font-mono"></span>
+            <button id="btnClearFilters" type="button" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg px-3 py-1 text-xs font-medium transition">
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 1: Search + Primary Operational Filters (Creation Date, Severity, Issue Gen, Cloud, SDLC State) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+          <div class="sm:col-span-2 lg:col-span-2">
+            <label for="searchInput" class="block text-[11px] font-medium text-slate-400 mb-1">Search Wiz Policy, Sentinel Rule, Checkov ID, Resource, or Ticket</label>
+            <input id="searchInput" type="text" placeholder="e.g. aws_s3_bucket, CKV_AWS, StorageAccount-001, S3Bucket-004, Policy Review Lead, SNOW..." class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+          </div>
+
+          <div>
+            <label for="filterDateWindow" class="block text-[11px] font-semibold text-indigo-300 mb-1">Policy Creation Date</label>
+            <select id="filterDateWindow" class="w-full bg-slate-950 border border-indigo-500/50 rounded-lg px-2.5 py-1.5 text-xs text-white font-semibold focus:outline-none focus:border-indigo-400">
+              <option value="ALL">All Dates (Full Catalog)</option>
+              <option value="1">1 Day (Last 24h)</option>
+              <option value="7">7 Days</option>
+              <option value="30">30 Days</option>
+              <option value="90">90 Days</option>
+              <option value="180">180 Days</option>
+              <option value="365">365 Days</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="filterSeverity" class="block text-[11px] font-semibold text-rose-300 mb-1">Policy Severity</label>
+            <select id="filterSeverity" class="w-full bg-slate-950 border border-rose-500/40 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-rose-400">
+              <option value="ALL">All Severities</option>
+              <option value="CRITICAL_HIGH">Critical &amp; High (Priority)</option>
+              <option value="CRITICAL">Critical Only</option>
+              <option value="HIGH">High Only</option>
+              <option value="MEDIUM">Medium Only</option>
+              <option value="LOW">Low / Info</option>
+              <option value="N/A">N/A (Unmapped Wiz Gap)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="filterIssueGen" class="block text-[11px] font-semibold text-cyan-300 mb-1">Wiz Issue Generation</label>
+            <select id="filterIssueGen" class="w-full bg-slate-950 border border-cyan-500/40 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-400">
+              <option value="ALL">All Issue Gen States</option>
+              <option value="Issue Gen Enabled">Issue Gen Enabled (Active)</option>
+              <option value="Configure Issue Gen">Needs Issue Gen Config</option>
+              <option value="Pending">Pending Env Validation</option>
+            </select>
           </div>
 
           <div>
             <label for="filterCloud" class="block text-[11px] font-medium text-slate-400 mb-1">Cloud Provider</label>
             <select id="filterCloud" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
-              <option value="ALL">All Clouds (AWS + Azure)</option>
+              <option value="ALL">All Clouds &amp; Wiz (AWS + Azure + Wiz)</option>
+              <option value="WIZ">All Wiz Policies (Built-In + Custom CCRs)</option>
+              <option value="WIZ_BUILTIN">Wiz Built-In CCRs Only</option>
+              <option value="WIZ_CUSTOM">Wiz Custom Rego Policies (.rego)</option>
               <option value="AWS">AWS Only</option>
               <option value="AZURE">Azure Only</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Architecture, 3-Layer Crosswalk & Governance Filters -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5 pt-1">
+          <div>
+            <label for="filterSdlcException" class="block text-[11px] font-semibold text-amber-300 mb-1">SDLC &amp; Exception State</label>
+            <select id="filterSdlcException" class="w-full bg-slate-950 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-xs text-amber-200 font-medium focus:outline-none focus:border-amber-400">
+              <option value="ALL">All SDLC &amp; Exception States</option>
+              <option value="Daily SDLC">1. Daily Intake Queue (Policies Review)</option>
+              <option value="Excluded">2. Excluded Rule Exceptions (90d Review)</option>
+              <option value="Custom Rule">3. Custom Rule Mgmt (Checkov/Sentinel/Rego)</option>
+              <option value="SDLC Approved">4. SDLC Approved &amp; Implemented Baseline</option>
             </select>
           </div>
 
@@ -327,27 +377,56 @@
           </div>
 
           <div>
-            <label for="filterEffect" class="block text-[11px] font-medium text-slate-400 mb-1">Enforcement / Effect</label>
+            <label for="filterEffect" class="block text-[11px] font-medium text-slate-400 mb-1">Enforcement / Effect (L2)</label>
             <select id="filterEffect" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
               <option value="ALL">All Effects</option>
-              <option value="Preventative">Preventative (hard-mandatory / soft-mandatory)</option>
+              <option value="Preventative">Preventative (hard / soft-mandatory)</option>
               <option value="Audit">Advisory Only (advisory)</option>
               <option value="Missing">Missing Sentinel Guardrail</option>
             </select>
           </div>
 
-          <div class="flex items-end gap-1.5">
-            <select id="filterFramework" class="w-1/2 bg-slate-950 border border-slate-700/80 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" title="Compliance Framework">
-              <option value="ALL">All FW</option>
-              <option value="CCM">CCM v4 (CSA)</option>
-              <option value="CIS">CIS</option>
-              <option value="NIST">NIST</option>
-              <option value="PCI">PCI</option>
-              <option value="FFIEC">FFIEC</option>
+          <div>
+            <label for="filterCheckovStatus" class="block text-[11px] font-medium text-slate-400 mb-1">Checkov CI Gate (L1)</label>
+            <select id="filterCheckovStatus" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Checkov (L1) States</option>
+              <option value="Built-In">Built-In CKV Active (CI/PR Gate)</option>
+              <option value="Custom">Custom Checkov YAML Needed</option>
             </select>
-            <button id="btnClearFilters" type="button" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg px-2 py-1.5 text-xs font-medium transition">
-              Clear All Filters
-            </button>
+          </div>
+
+          <div>
+            <label for="filterGraphStatus" class="block text-[11px] font-medium text-slate-400 mb-1">Security Graph Posture (L3)</label>
+            <select id="filterGraphStatus" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+              <option value="ALL">All Security Graph States</option>
+              <option value="Graph Verified">Graph Verified (Issue Generated)</option>
+              <option value="Needs Graph">CCR Only / No Issue Yet</option>
+              <option value="No Linked">No Linked Graph Control (Gap)</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5">
+            <div>
+              <label for="filterFramework" class="block text-[11px] font-medium text-slate-400 mb-1">Framework</label>
+              <select id="filterFramework" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" title="Compliance Framework">
+                <option value="ALL">All FW</option>
+                <option value="CCM">CCM v4</option>
+                <option value="CIS">CIS</option>
+                <option value="NIST">NIST</option>
+                <option value="PCI">PCI</option>
+                <option value="FFIEC">FFIEC</option>
+              </select>
+            </div>
+            <div>
+              <label for="filterTicketOwner" class="block text-[11px] font-medium text-slate-400 mb-1">Ticket / Owner</label>
+              <select id="filterTicketOwner" class="w-full bg-slate-950 border border-slate-700/80 rounded-lg px-2 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500" title="Remediation Ticket or Workstream Owner">
+                <option value="ALL">All</option>
+                <option value="HAS_TICKET">Open Ticket</option>
+                <option value="NO_TICKET">No Ticket</option>
+                <option value="Policy Review Lead">Policy Review Lead</option>
+                <option value="Custom Rule Engineering Lead">Custom Rule Lead</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
@@ -361,6 +440,7 @@
           <div class="flex items-center gap-3 text-[11px] text-slate-400">
             <span><span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-1"></span>AWS</span>
             <span><span class="inline-block w-2 h-2 rounded-full bg-blue-400 mr-1"></span>Azure</span>
+            <span><span class="inline-block w-2 h-2 rounded-full bg-indigo-400 mr-1"></span>Wiz CCR (15 Built-In · 3 Custom Rego)</span>
           </div>
         </div>
 
@@ -698,7 +778,7 @@ python3 azure_to_wiz_mapper.py \
             </div>
             <div>
               <label for="modalApproverInput" class="block text-[11px] text-amber-300 font-medium mb-1">SDLC Approver / Workstream Owner</label>
-              <input id="modalApproverInput" type="text" placeholder="e.g. Policies Review (Snehal) / Custom Rules (Trevor)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
+              <input id="modalApproverInput" type="text" placeholder="e.g. Policies Review (Policy Review Lead) / Custom Rules (Custom Rule Engineering Lead)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
             </div>
             <div>
               <label for="modalReassessmentDate" class="block text-[11px] text-amber-300 font-medium mb-1">Next Periodic Reassessment Date (90d)</label>
@@ -1461,15 +1541,15 @@ python3 azure_to_wiz_mapper.py \
         if (!r.sdlc_exception_status) {
           if (r.azure_policy_guid === "sentinel-azurerm-disk-cmk-encryption" || r.azure_policy_guid === "MISSING-SENTINEL-CLOUDTRAIL-002") {
             r.sdlc_exception_status = "Excluded · Compensated by Sentinel/Checkov";
-            r.sdlc_approver = "Policies Review (Snehal)";
+            r.sdlc_approver = "Policies Review (Policy Review Lead)";
             r.next_periodic_review_date = "2027-01-28";
           } else if (r.ccr_change_status === "New CCR" || r.ccr_change_status === "Updated CCR") {
             r.sdlc_exception_status = "Daily SDLC Review & Testing Queue";
-            r.sdlc_approver = "Policies Review (Snehal)";
+            r.sdlc_approver = "Policies Review (Policy Review Lead)";
             r.next_periodic_review_date = "2026-11-13";
           } else if (r.azure_policy_type === "Custom" || r.azure_policy_type === "Missing-Sentinel") {
             r.sdlc_exception_status = "Custom Rule SDLC Development";
-            r.sdlc_approver = "Custom Rule Management (Trevor)";
+            r.sdlc_approver = "Custom Rule Management (Custom Rule Engineering Lead)";
             r.next_periodic_review_date = "2027-01-28";
           } else {
             r.sdlc_exception_status = "SDLC Approved · Active Baseline";
@@ -1550,34 +1630,54 @@ python3 azure_to_wiz_mapper.py \
       const mappedPct = total > 0 ? Math.round((parityCount / total) * 100) : 0;
       document.getElementById("coverageBadge").textContent = `${mappedPct}% Parity`;
 
-      // Update Doughnut Chart
+      // Update Horizontal Bar Chart for Bidirectional Coverage & Gaps
       const tierData = [t1, t2 + t3, wizToSentinelGaps, sentinelToWizGaps];
       if (!tierChartInstance) {
         const ctx1 = document.getElementById("tierChart").getContext("2d");
         tierChartInstance = new Chart(ctx1, {
-          type: "doughnut",
+          type: "bar",
           data: {
             labels: [
               "Tier 1: Exact ID Parity",
               "Tier 2/3: Crosswalk Parity",
-              "Wiz → Sentinel Gap (No Sentinel)",
-              "Sentinel → Wiz Gap (No Wiz CCR)"
+              "Wiz → Sentinel Gap",
+              "Sentinel → Wiz Gap"
             ],
             datasets: [{
+              label: "Control Count",
               data: tierData,
               backgroundColor: ["#10b981", "#06b6d4", "#f59e0b", "#f43f5e"],
-              borderColor: "#0f172a",
-              borderWidth: 2
+              borderColor: ["#059669", "#0891b2", "#d97706", "#e11d48"],
+              borderWidth: 1,
+              borderRadius: 6,
+              barThickness: 24
             }]
           },
           options: {
+            indexAxis: "y",
             responsive: true,
             maintainAspectRatio: false,
-            cutout: "64%",
+            scales: {
+              x: {
+                beginAtZero: true,
+                ticks: { stepSize: 1, color: "#94a3b8", font: { size: 10 } },
+                grid: { color: "#1e293b" }
+              },
+              y: {
+                ticks: { color: "#e2e8f0", font: { size: 11, weight: "600" } },
+                grid: { display: false }
+              }
+            },
             plugins: {
-              legend: {
-                position: "bottom",
-                labels: { color: "#cbd5e1", font: { size: 11 }, boxWidth: 10, padding: 10 }
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(ctx) {
+                    const val = ctx.parsed.x || 0;
+                    const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                    return ` ${val} controls (${pct}% of catalog)`;
+                  }
+                }
               }
             }
           }
@@ -1680,12 +1780,30 @@ python3 azure_to_wiz_mapper.py \
     function getFilteredRecords() {
       const q = document.getElementById("searchInput").value.trim().toLowerCase();
       const dateWindow = document.getElementById("filterDateWindow").value;
+      const severityFilter = document.getElementById("filterSeverity").value;
+      const issueGenFilter = document.getElementById("filterIssueGen").value;
       const sdlcFilter = document.getElementById("filterSdlcException").value;
       const cloudFilter = document.getElementById("filterCloud").value;
       const gapFilter = document.getElementById("filterGapDirection").value;
       const tierFilter = document.getElementById("filterTier").value;
       const effectFilter = document.getElementById("filterEffect").value;
+      const checkovFilter = document.getElementById("filterCheckovStatus").value;
+      const graphFilter = document.getElementById("filterGraphStatus").value;
       const fwFilter = document.getElementById("filterFramework").value;
+      const ticketOwnerFilter = document.getElementById("filterTicketOwner").value;
+
+      // Count active filters for badge
+      const filterVals = [dateWindow, severityFilter, issueGenFilter, sdlcFilter, cloudFilter, gapFilter, tierFilter, effectFilter, checkovFilter, graphFilter, fwFilter, ticketOwnerFilter];
+      const activeCount = filterVals.filter(v => v !== "ALL").length + (q ? 1 : 0) + (activeWorkflowStep ? 1 : 0);
+      const badgeEl = document.getElementById("activeFilterCountBadge");
+      if (badgeEl) {
+        if (activeCount > 0) {
+          badgeEl.textContent = `${activeCount} Active Filter${activeCount > 1 ? "s" : ""}`;
+          badgeEl.classList.remove("hidden");
+        } else {
+          badgeEl.classList.add("hidden");
+        }
+      }
 
       return policyRecords.filter(r => {
         if (dateWindow !== "ALL") {
@@ -1693,13 +1811,37 @@ python3 azure_to_wiz_mapper.py \
           const ageDays = getPolicyAgeDays(r);
           if (ageDays > maxDays) return false;
         }
+        if (severityFilter !== "ALL") {
+          const sev = (r.wiz_severity || "N/A").toUpperCase();
+          if (severityFilter === "CRITICAL_HIGH") {
+            if (!(sev === "CRITICAL" || sev === "HIGH")) return false;
+          } else if (sev !== severityFilter) {
+            return false;
+          }
+        }
+        if (issueGenFilter !== "ALL") {
+          const valStatus = r.finding_validation_status || "";
+          if (!valStatus.includes(issueGenFilter)) return false;
+        }
         if (activeWorkflowStep === "1" && !(r.ccr_change_status === "New CCR" || r.ccr_change_status === "Updated CCR")) return false;
         if (activeWorkflowStep === "2" && r.finding_validation_status.includes("Issue Gen Enabled")) return false;
         if (activeWorkflowStep === "3" && !r.security_graph_status.includes("Graph Verified")) return false;
         if (activeWorkflowStep === "4" && r.gap_direction.includes("Bidirectional Parity")) return false;
 
         if (sdlcFilter !== "ALL" && !(r.sdlc_exception_status || "").includes(sdlcFilter)) return false;
-        if (cloudFilter !== "ALL" && r.cloud_provider !== cloudFilter) return false;
+        if (cloudFilter !== "ALL") {
+          if (cloudFilter === "WIZ") {
+            // Show all Wiz policies (both Built-In Wiz CCRs and Custom Wiz OPA Rego policies)
+            const hasWiz = Boolean(r.wiz_rule_id || r.wiz_rule_name || r.generated_rego_skeleton);
+            if (!hasWiz) return false;
+          } else if (cloudFilter === "WIZ_BUILTIN") {
+            if (!r.wiz_rule_id || r.wiz_rule_id === "UNMAPPED") return false;
+          } else if (cloudFilter === "WIZ_CUSTOM") {
+            if (r.wiz_rule_id && r.wiz_rule_id !== "UNMAPPED") return false;
+          } else if (r.cloud_provider !== cloudFilter) {
+            return false;
+          }
+        }
         if (gapFilter !== "ALL" && !(r.gap_direction || "").includes(gapFilter)) return false;
         if (tierFilter !== "ALL" && r.mapping_tier !== tierFilter) return false;
         if (effectFilter !== "ALL") {
@@ -1708,11 +1850,29 @@ python3 azure_to_wiz_mapper.py \
           if (effectFilter === "Audit" && !(eff.includes("audit") || eff.includes("advisory"))) return false;
           if (effectFilter === "Missing" && !eff.includes("missing")) return false;
         }
+        if (checkovFilter !== "ALL") {
+          const ckvSt = r.checkov_status || "";
+          if (!ckvSt.includes(checkovFilter)) return false;
+        }
+        if (graphFilter !== "ALL") {
+          const gSt = r.security_graph_status || "";
+          if (graphFilter === "Graph Verified" && !gSt.includes("Graph Verified")) return false;
+          if (graphFilter === "Needs Graph" && !(gSt.includes("CCR Only") || gSt.includes("No Issue Generated Yet"))) return false;
+          if (graphFilter === "No Linked" && !gSt.includes("No Linked Graph Control")) return false;
+        }
         if (fwFilter !== "ALL") {
           if (!(r.shared_controls || "").toUpperCase().includes(fwFilter)) return false;
         }
+        if (ticketOwnerFilter !== "ALL") {
+          const tkt = r.team_action_ticket || "None";
+          const owner = r.sdlc_approver || "";
+          if (ticketOwnerFilter === "HAS_TICKET" && (tkt === "None" || tkt === "")) return false;
+          if (ticketOwnerFilter === "NO_TICKET" && tkt !== "None" && tkt !== "") return false;
+          if (ticketOwnerFilter === "Policy Review Lead" && !owner.includes("Policy Review Lead")) return false;
+          if (ticketOwnerFilter === "Custom Rule Engineering Lead" && !owner.includes("Custom Rule Engineering Lead")) return false;
+        }
         if (q) {
-          const hay = `${r.checkov_id} ${r.checkov_status} ${r.cloud_provider} ${r.source_engine} ${r.gap_direction} ${r.azure_policy_name} ${r.azure_policy_guid} ${r.azure_category} ${r.azure_resource_types} ${r.wiz_rule_name} ${r.wiz_short_id} ${r.shared_controls} ${r.review_status} ${r.ccr_change_status} ${r.team_action_ticket}`.toLowerCase();
+          const hay = `${r.checkov_id} ${r.checkov_status} ${r.cloud_provider} ${r.source_engine} ${r.gap_direction} ${r.azure_policy_name} ${r.azure_policy_guid} ${r.azure_category} ${r.azure_resource_types} ${r.wiz_rule_name} ${r.wiz_short_id} ${r.wiz_severity} ${r.finding_validation_status} ${r.security_graph_status} ${r.sdlc_approver} ${r.shared_controls} ${r.review_status} ${r.ccr_change_status} ${r.team_action_ticket}`.toLowerCase();
           if (!hay.includes(q)) return false;
         }
         return true;
@@ -1723,6 +1883,13 @@ python3 azure_to_wiz_mapper.py \
       const tbody = document.getElementById("mappingTableBody");
       const filtered = getFilteredRecords();
       document.getElementById("tableCount").textContent = String(filtered.length);
+      const quickStatsEl = document.getElementById("quickFilterStats");
+      if (quickStatsEl) {
+        const critHigh = filtered.filter(r => r.wiz_severity === "CRITICAL" || r.wiz_severity === "HIGH").length;
+        const issueGenOn = filtered.filter(r => (r.finding_validation_status || "").includes("Issue Gen Enabled")).length;
+        const openTickets = filtered.filter(r => r.team_action_ticket && r.team_action_ticket !== "None").length;
+        quickStatsEl.textContent = `${critHigh} Crit/High · ${issueGenOn} Issue Gen Enabled · ${openTickets} Open Tickets`;
+      }
 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400">No policies match the current filters. Click "Reset" or "Show All Stages" to clear filters.</td></tr>`;
@@ -1753,11 +1920,15 @@ python3 azure_to_wiz_mapper.py \
               ? `<span class="px-2 py-0.5 rounded text-[10px] bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Audit Only → Add Sentinel</span>`
               : `<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Bidirectional Parity (${r.azure_default_effect})</span>`;
 
+        const wizBadge = r.wiz_rule_id === "UNMAPPED"
+          ? `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">L3 Wiz: Custom-Rego</span>`
+          : `<span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">L3 Wiz: ${r.wiz_short_id}</span>`;
+
         const wizCol = r.wiz_rule_id === "UNMAPPED"
-          ? `<div class="text-rose-300 font-medium">Missing in Wiz (No Built-in CCR)</div>
-             <div class="text-[11px] text-slate-400 mt-0.5">Custom Wiz OPA Rego ready in Inspector</div>`
+          ? `<div class="font-medium text-purple-200">[Custom Wiz Rego] ${r.azure_policy_name}</div>
+             <div class="text-[11px] font-mono text-rose-300 mt-0.5">No Built-In Wiz CCR · Custom .rego Ready · <span class="text-cyan-300">${r.finding_validation_status}</span></div>`
           : `<div class="font-medium text-slate-100">${r.wiz_rule_name}</div>
-             <div class="text-[11px] font-mono text-indigo-400 mt-0.5">${r.wiz_short_id} · ${r.wiz_severity} · <span class="text-cyan-300">${r.finding_validation_status}</span></div>`;
+             <div class="text-[11px] font-mono text-indigo-400 mt-0.5">${r.wiz_short_id} (${r.wiz_rule_id}) · ${r.wiz_severity} · <span class="text-cyan-300">${r.finding_validation_status}</span></div>`;
 
         return `
           <tr data-guid="${r.azure_policy_guid}" class="policy-row hover:bg-slate-800/50 transition cursor-pointer">
@@ -1766,6 +1937,7 @@ python3 azure_to_wiz_mapper.py \
                 ${cloudBadge}
                 <span class="text-[10px] font-mono px-1.5 py-0.5 rounded ${r.checkov_status && r.checkov_status.includes('Custom') ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'}" title="${r.checkov_status}">L1: ${r.checkov_id}</span>
                 <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">L2: ${r.source_engine}</span>
+                ${wizBadge}
                 ${changeBadge}
                 <span class="text-[10px] font-mono text-emerald-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">Created: ${r.policy_created_at || r.wiz_updated_at || "2026-08-01"} (${getPolicyAgeDays(r)}d ago)</span>
               </div>
@@ -1870,7 +2042,7 @@ python3 azure_to_wiz_mapper.py \
       document.getElementById("modalGraphCheckSelect").value = rec.security_graph_status || "Graph Verified · Expected Issue Generated";
       document.getElementById("modalTicketInput").value = rec.team_action_ticket || "";
       document.getElementById("modalExceptionStatusSelect").value = rec.sdlc_exception_status || "SDLC Approved · Active Baseline";
-      document.getElementById("modalApproverInput").value = rec.sdlc_approver || "Policies Review (Snehal)";
+      document.getElementById("modalApproverInput").value = rec.sdlc_approver || "Policies Review (Policy Review Lead)";
       document.getElementById("modalReassessmentDate").value = rec.next_periodic_review_date || "2027-01-28";
       document.getElementById("modalDispositionSelect").value = rec.review_status;
       document.getElementById("modalAuditNote").value = rec.sme_note || "";
@@ -2029,7 +2201,9 @@ python3 azure_to_wiz_mapper.py \
         "        <option value=\"365\">365 Days</option>",
         "      </select>",
         "      <select id=\"cloud\" class=\"bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white\">",
-        "        <option value=\"ALL\">All Clouds (AWS + Azure)</option>",
+        "        <option value=\"ALL\">All Clouds & Wiz (AWS + Azure + Wiz)</option>",
+        "        <option value=\"WIZ\">All Wiz Policies (CCR Catalog)</option>",
+        "        <option value=\"WIZ_BUILTIN\">Wiz Built-In CCRs Only</option>",
         "        <option value=\"AWS\">AWS Only</option>",
         "        <option value=\"AZURE\">Azure Only</option>",
         "      </select>",
@@ -2077,7 +2251,7 @@ python3 azure_to_wiz_mapper.py \
         "      var age = isNaN(pDt.getTime()) ? 120 : Math.floor(Math.max(0, refDt.getTime() - pDt.getTime()) / 86400000);",
         "      if (age > parseInt(d, 10)) return false;",
         "    }",
-        "    if (c !== 'ALL' && r.cloud_provider !== c) return false;",
+        "    if (c === 'WIZ_BUILTIN' && (!r.wiz_rule_id || r.wiz_rule_id === 'UNMAPPED')) return false; if (c !== 'ALL' && c !== 'WIZ' && c !== 'WIZ_BUILTIN' && r.cloud_provider !== c) return false;",
         "    if (g !== 'ALL' && (String(r.gap_direction || '') + ' ' + String(r.sdlc_exception_status || '')).indexOf(g) === -1) return false;",
         "    return !q || JSON.stringify(r).toLowerCase().indexOf(q) !== -1;",
         "  });",
@@ -2365,19 +2539,28 @@ python3 azure_to_wiz_mapper.py \
       });
 
       // Filters
-      ["searchInput", "filterDateWindow", "filterSdlcException", "filterCloud", "filterGapDirection", "filterTier", "filterEffect", "filterFramework"].forEach(id => {
+      [
+        "searchInput", "filterDateWindow", "filterSeverity", "filterIssueGen",
+        "filterSdlcException", "filterCloud", "filterGapDirection", "filterTier",
+        "filterEffect", "filterCheckovStatus", "filterGraphStatus", "filterFramework", "filterTicketOwner"
+      ].forEach(id => {
         document.getElementById(id).addEventListener("input", renderTable);
         document.getElementById(id).addEventListener("change", renderTable);
       });
       document.getElementById("btnClearFilters").addEventListener("click", () => {
         document.getElementById("searchInput").value = "";
         document.getElementById("filterDateWindow").value = "ALL";
+        document.getElementById("filterSeverity").value = "ALL";
+        document.getElementById("filterIssueGen").value = "ALL";
         document.getElementById("filterSdlcException").value = "ALL";
         document.getElementById("filterCloud").value = "ALL";
         document.getElementById("filterGapDirection").value = "ALL";
         document.getElementById("filterTier").value = "ALL";
         document.getElementById("filterEffect").value = "ALL";
+        document.getElementById("filterCheckovStatus").value = "ALL";
+        document.getElementById("filterGraphStatus").value = "ALL";
         document.getElementById("filterFramework").value = "ALL";
+        document.getElementById("filterTicketOwner").value = "ALL";
         setWorkflowStepFilter(null);
       });
 

@@ -1235,7 +1235,7 @@ def build_bidirectional_mappings(
                 sdlc_stage = "Daily SDLC Review & Testing Queue"
                 exc_status = "Active Policy (Pending Bi-Weekly Sign-Off)"
                 exc_just = "N/A (Active Baseline Control under 14-day SDLC evaluation)"
-                approver = "Pending Policies Review (Snehal)"
+                approver = "Pending Policies Review (Policy Review Lead)"
             else:
                 sdlc_stage = "SDLC Approved & Implemented"
                 exc_status = "Active Policy (No Exception)"
@@ -1319,10 +1319,10 @@ def build_bidirectional_mappings(
                     security_graph_status="No Linked Graph Control",
                     preventative_control_coverage=f"Preventative {pol.source_engine} ({pol.default_effect}) Only — Missing Wiz Drift Check",
                     team_action_ticket=f"Create Team Issue: Deploy Custom Wiz OPA Rego CCR & {ckv_id}",
-                    sdlc_governance_stage="Custom Rule SDLC Development (Trevor)",
+                    sdlc_governance_stage="Custom Rule SDLC Development (Custom Rule Engineering Lead)",
                     rule_exception_status="Custom Rule Pending Deployment",
                     exception_justification="Internal bank policy enforced in Sentinel; custom Wiz OPA Rego rule in SDLC development.",
-                    approver_signoff="Pending Custom Rule Management (Trevor)",
+                    approver_signoff="Pending Custom Rule Management (Custom Rule Engineering Lead)",
                     next_periodic_review_date=next_review_dt,
                     azure_policy_guid=pol.guid,
                     azure_policy_name=pol.display_name,
@@ -1374,12 +1374,12 @@ def build_bidirectional_mappings(
                 sdlc_stage = "Excluded (Documented Rule Exception)"
                 exc_status = "Excluded - Not Applicable to Cloud Architecture"
                 exc_just = f"Wiz rule ({wiz.short_id}) evaluated during bi-weekly review and excluded as not applicable to bank {wiz.cloud_provider} architecture."
-                approver = "Approved Exception (Policies Review - Snehal)"
+                approver = "Approved Exception (Policies Review - Policy Review Lead)"
             else:
                 sdlc_stage = "Daily SDLC Review & Testing Queue"
                 exc_status = "Active Wiz Rule (Missing Sentinel Gate)"
                 exc_just = "Active bi-weekly Wiz rule; requires SDLC evaluation and HashiCorp Sentinel preventative deployment."
-                approver = "Pending Policies Review (Snehal)"
+                approver = "Pending Policies Review (Policy Review Lead)"
 
             results.append(
                 MappingResult(
